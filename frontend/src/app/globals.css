@@ -178,6 +178,7 @@ body::after {
 .leaflet-container {
   background: var(--color-surface-alt);
   font-family: var(--font-sans);
+  z-index: 0;
 }
 
 .leaflet-control-attribution {

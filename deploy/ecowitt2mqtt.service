@@ -8,9 +8,9 @@ Type=exec
 User=ecowitt2mqtt
 EnvironmentFile=/opt/waffleweather/.env
 ExecStart=/opt/ecowitt2mqtt/venv/bin/ecowitt2mqtt \
-    --mqtt-broker localhost \
-    --mqtt-port 1883 \
-    --mqtt-topic Gateway \
+    --mqtt-broker ${WW_MQTT_BROKER} \
+    --mqtt-port ${WW_MQTT_PORT} \
+    --mqtt-topic ${WW_MQTT_TOPIC} \
     --mqtt-username ${WW_MQTT_USERNAME} \
     --mqtt-password ${WW_MQTT_PASSWORD} \
     --mqtt-retain \

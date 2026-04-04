@@ -23,8 +23,10 @@ export default function DashboardPage() {
 
   // Orval wraps response as { data: Observation, status, headers }
   const apiData = apiResponse?.data as Observation | undefined;
-  // WebSocket data takes precedence over REST data
-  const data: Observation | null = wsData ?? apiData ?? null;
+  // Merge WS over REST so REST-only fields (e.g. zambretti_forecast) persist
+  const data: Observation | null = wsData
+    ? ({ ...apiData, ...wsData } as Observation)
+    : apiData ?? null;
 
   return (
     <div className="p-4 sm:p-6">

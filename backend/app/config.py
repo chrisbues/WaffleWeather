@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     mqtt_password: str | None = None
     cors_origins: list[str] = ["http://localhost:3000"]
     enable_docs: bool = False  # Set WW_ENABLE_DOCS=true to expose /docs and /openapi.json
+    api_key: str | None = None  # Set WW_API_KEY to require authentication on all endpoints
 
     # Station metadata
     station_name: str | None = None
@@ -18,4 +19,4 @@ class Settings(BaseSettings):
     station_longitude: float | None = None
     station_altitude: float | None = None  # meters above sea level
 
-    model_config = {"env_file": ".env", "env_prefix": "WW_"}
+    model_config = {"env_file": [".env", "../.env"], "env_prefix": "WW_"}

@@ -8,6 +8,9 @@ from pathlib import Path
 import yaml
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.requests import Request
+from starlette.responses import JSONResponse
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 from app.api.router import api_router
 from app.api.websocket import router as ws_router
@@ -55,6 +58,35 @@ app = FastAPI(
     redoc_url="/redoc" if settings.enable_docs else None,
     openapi_url="/openapi.json" if settings.enable_docs else None,
 )
+
+# API key authentication middleware (raw ASGI — works for both HTTP and WebSocket)
+if settings.api_key:
+
+    class ApiKeyMiddleware:
+        def __init__(self, app: ASGIApp) -> None:
+            self.app = app
+
+        async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+            if scope["type"] in ("http", "websocket"):
+                path = scope.get("path", "")
+                if path.startswith("/api/") or path.startswith("/ws/"):
+                    headers = dict(scope.get("headers", []))
+                    key = headers.get(b"x-api-key", b"").decode()
+                    if key != settings.api_key:
+                        if scope["type"] == "http":
+                            response = JSONResponse(
+                                status_code=401,
+                                content={"detail": "Invalid or missing API key"},
+                            )
+                            await response(scope, receive, send)
+                            return
+                        else:
+                            # Reject WebSocket before accept
+                            await send({"type": "websocket.close", "code": 4401})
+                            return
+            await self.app(scope, receive, send)
+
+    app.add_middleware(ApiKeyMiddleware)
 
 # CORS
 app.add_middleware(

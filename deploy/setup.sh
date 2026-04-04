@@ -184,6 +184,17 @@ echo "[6/9] Configuring Nginx..."
 sudo cp "${SCRIPT_DIR}/nginx.conf" /etc/nginx/sites-available/waffleweather
 sudo ln -sf /etc/nginx/sites-available/waffleweather /etc/nginx/sites-enabled/waffleweather
 sudo rm -f /etc/nginx/sites-enabled/default
+
+# Create API key and nginx snippet
+API_KEY=$(openssl rand -base64 32 | tr -d '/+=' | head -c 48)
+sudo mkdir -p /etc/nginx/snippets
+if [ ! -f /etc/nginx/snippets/waffleweather-apikey.conf ]; then
+    echo "set \$ww_api_key \"${API_KEY}\";" | sudo tee /etc/nginx/snippets/waffleweather-apikey.conf > /dev/null
+    sudo chmod 640 /etc/nginx/snippets/waffleweather-apikey.conf
+    sudo chown root:www-data /etc/nginx/snippets/waffleweather-apikey.conf
+    echo "  API key generated and written to nginx snippet."
+fi
+
 sudo nginx -t
 sudo systemctl enable --now nginx
 
@@ -245,6 +256,7 @@ if [ ! -f /opt/waffleweather/.env ]; then
     sed -i "s|waffleweather:changeme@|waffleweather:${DB_PASSWORD}@|g" /opt/waffleweather/.env
     sed -i "s/MQTT_PASSWORD=changeme/MQTT_PASSWORD=${MQTT_PASSWORD}/" /opt/waffleweather/.env
     sed -i "s/WW_MQTT_PASSWORD=changeme/WW_MQTT_PASSWORD=${MQTT_PASSWORD}/" /opt/waffleweather/.env
+    sed -i "s/WW_API_KEY=/WW_API_KEY=${API_KEY}/" /opt/waffleweather/.env
     chmod 600 /opt/waffleweather/.env
     echo "  Created /opt/waffleweather/.env with generated password (chmod 600)."
 fi

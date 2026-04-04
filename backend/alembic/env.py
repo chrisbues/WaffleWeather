@@ -5,11 +5,15 @@ from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
+from app.config import Settings
 from app.models import Base
 
 config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
+
+# Override sqlalchemy.url from app settings (reads WW_DATABASE_URL from .env)
+config.set_main_option("sqlalchemy.url", Settings().database_url)
 
 target_metadata = Base.metadata
 

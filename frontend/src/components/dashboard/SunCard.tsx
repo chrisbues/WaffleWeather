@@ -6,6 +6,7 @@ import { RiSunLine } from "@remixicon/react";
 import { useListStations } from "@/generated/stations/stations";
 import type { Station } from "@/generated/models";
 import WeatherCard from "./WeatherCard";
+import InfoTip from "@/components/ui/InfoTip";
 
 function fmtTime(d: Date): string {
   return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -83,7 +84,7 @@ export default function SunCard() {
   }, [hasLocation, station?.latitude, station?.longitude, minuteKey]);
 
   return (
-    <WeatherCard title="Sun" icon={<RiSunLine className="h-4 w-4" />}>
+    <WeatherCard title="Sun" icon={<RiSunLine className="h-4 w-4" />} info="Sunrise, sunset, and sun position calculated from your station's coordinates using astronomical algorithms. Updates every minute.">
       {!hasLocation || !sunData ? (
         <p className="text-sm text-text-muted">
           Station location not configured. Set latitude and longitude to see sun
@@ -186,13 +187,13 @@ export default function SunCard() {
               </p>
             </div>
             <div>
-              <p className="text-xs text-text-faint">Solar noon</p>
+              <p className="text-xs text-text-faint">Solar noon <InfoTip text="When the sun reaches its highest point in the sky — not always 12:00 due to your longitude within the time zone." side="bottom" /></p>
               <p className="font-mono font-medium tabular-nums text-text-muted">
                 {fmtTime(sunData.solarNoon)}
               </p>
             </div>
             <div>
-              <p className="text-xs text-text-faint">Golden hour</p>
+              <p className="text-xs text-text-faint">Golden hour <InfoTip text="The period before sunset when sunlight is warm and diffused — prized for photography and golden outdoor light." side="bottom" /></p>
               <p className="font-mono font-medium tabular-nums text-text-muted">
                 {fmtTime(sunData.goldenHour)}
               </p>

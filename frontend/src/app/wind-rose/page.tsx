@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { useGetWindRoseData } from "@/generated/aggregates/aggregates";
 import type { WindRoseDataPoint } from "@/generated/models";
 import WindRoseChart from "@/components/wind-rose/WindRoseChart";
+import InfoTip from "@/components/ui/InfoTip";
 
 type TimeRange = "24h" | "7d" | "30d" | "1y";
 
@@ -48,7 +49,7 @@ export default function WindRosePage() {
   return (
     <div className="p-4 sm:p-6">
       <div className="page-header mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="font-display text-2xl font-semibold text-text">Wind Rose</h1>
+        <h1 className="font-display text-2xl font-semibold text-text">Wind Rose <InfoTip text="A polar chart showing wind direction frequency and speed distribution. Each spoke represents a compass direction; longer spokes mean wind blows from that direction more often. Colors indicate speed bands." /></h1>
         <div className="flex gap-1 rounded-lg border border-border bg-surface-alt p-1">
           {RANGES.map((r) => (
             <button

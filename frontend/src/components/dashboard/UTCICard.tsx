@@ -90,6 +90,7 @@ export default function UTCICard({ data }: { data: Observation | null }) {
     <WeatherCard
       title="Thermal Comfort"
       icon={<RiTempHotLine className="h-4 w-4" />}
+      info="Universal Thermal Climate Index — a single temperature that accounts for wind, humidity, and solar radiation to model how your body actually perceives conditions outdoors."
     >
       <div className="flex items-center gap-1.5">
         <span className="font-mono text-4xl font-semibold tabular-nums text-text">

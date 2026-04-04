@@ -8,6 +8,7 @@ import { convertSpeed, convertTemp } from "@/lib/units";
 import { useUnits } from "@/providers/UnitsProvider";
 import WeatherCard from "./WeatherCard";
 import TrendIndicator from "./TrendIndicator";
+import InfoTip from "@/components/ui/InfoTip";
 
 function beaufort(kmh: number | null | undefined): { force: number; label: string } | null {
   if (kmh == null) return null;
@@ -115,6 +116,7 @@ export default function WindCard({ data, trend }: { data: Observation | null; tr
     <WeatherCard
       title="Wind"
       icon={<RiWindyLine className="h-4 w-4" />}
+      info="Wind speed and direction from the anemometer. Speed is a 1-minute average; gust is the peak in the current interval."
     >
       <div className="flex items-center justify-between">
         <div>
@@ -141,11 +143,11 @@ export default function WindCard({ data, trend }: { data: Observation | null; tr
       </div>
       <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
         <div>
-          <p className="text-xs text-text-faint">Gust</p>
+          <p className="text-xs text-text-faint">Gust <InfoTip text="Highest instantaneous wind speed in the current reporting interval." side="bottom" /></p>
           <p className="font-mono font-medium tabular-nums text-text-muted">{fmt(gust.value)} {gust.unit}</p>
         </div>
         <div>
-          <p className="text-xs text-text-faint">Wind chill</p>
+          <p className="text-xs text-text-faint">Wind chill <InfoTip text={`How cold it feels due to wind. Only applies below ${system === "metric" ? "10°C" : "50°F"} with wind present.`} side="bottom" /></p>
           <p className="font-mono font-medium tabular-nums text-text-muted">
             {chill.value != null ? `${fmt(chill.value)}\u00B0` : "\u2014"}
           </p>

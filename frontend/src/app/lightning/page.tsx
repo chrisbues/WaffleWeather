@@ -22,6 +22,7 @@ import { RiFlashlightLine } from "@remixicon/react";
 import { fmt, timeAgo } from "@/lib/utils";
 import { convertDistance } from "@/lib/units";
 import { useUnits } from "@/providers/UnitsProvider";
+import InfoTip from "@/components/ui/InfoTip";
 
 const LightningMap = dynamic(
   () => import("@/components/lightning/LightningMap"),
@@ -166,7 +167,7 @@ export default function LightningPage() {
       <div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
         <div className="weather-card rounded-xl border border-border bg-surface-alt p-4">
           <p className="text-xs font-semibold uppercase tracking-wider text-text-faint">
-            Sensor Count
+            Sensor Count <InfoTip text="Running count from the WH57 sensor since its last daily reset at midnight. This is not the same as the period total below, which tracks actual detected strike events." side="bottom" />
           </p>
           <p className="mt-1 font-mono text-2xl font-semibold tabular-nums text-text">
             {data?.lightning_count ?? "\u2014"}
@@ -174,7 +175,7 @@ export default function LightningPage() {
         </div>
         <div className="weather-card rounded-xl border border-border bg-surface-alt p-4">
           <p className="text-xs font-semibold uppercase tracking-wider text-text-faint">
-            Distance
+            Distance <InfoTip text="Estimated distance to the most recently detected lightning strike. The WH57 sensor uses electromagnetic signal strength to approximate range." side="bottom" />
           </p>
           <p className="mt-1 font-mono text-2xl font-semibold tabular-nums text-text">
             {hasLightning ? `${fmt(dist.value)} ${dist.unit}` : "\u2014"}
@@ -182,7 +183,7 @@ export default function LightningPage() {
         </div>
         <div className="weather-card rounded-xl border border-border bg-surface-alt p-4">
           <p className="text-xs font-semibold uppercase tracking-wider text-text-faint">
-            Last Strike
+            Last Strike <InfoTip text="Time elapsed since the WH57 sensor last detected a lightning strike." side="bottom" />
           </p>
           <p className="mt-1 text-lg font-medium text-text">
             {data?.lightning_time ? timeAgo(data.lightning_time) : "\u2014"}
@@ -190,7 +191,7 @@ export default function LightningPage() {
         </div>
         <div className="weather-card rounded-xl border border-border bg-surface-alt p-4">
           <p className="text-xs font-semibold uppercase tracking-wider text-text-faint">
-            {range === "24h" ? "24h" : range === "7d" ? "7d" : "30d"} Total
+            {range === "24h" ? "24h" : range === "7d" ? "7d" : "30d"} Total <InfoTip text="Total detected strike events for the selected time period, based on changes in the sensor's running count." side="bottom" />
           </p>
           <p className="mt-1 font-mono text-2xl font-semibold tabular-nums text-text">
             {summary?.total_strikes ?? "\u2014"}
@@ -208,7 +209,7 @@ export default function LightningPage() {
         {/* Strike rate chart */}
         <div className="weather-card rounded-xl p-4">
           <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-muted">
-            Strike Activity
+            Strike Activity <InfoTip text="Number of detected lightning strikes per time bucket. Derived from changes in the sensor's running count." side="bottom" />
           </h3>
           <div className="h-44">
             {chartData.hourly.length > 0 ? (
@@ -239,7 +240,7 @@ export default function LightningPage() {
         {/* Distance over time */}
         <div className="weather-card rounded-xl p-4">
           <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-muted">
-            Storm Distance ({distUnit})
+            Storm Distance ({distUnit}) <InfoTip text="Closest detected strike distance per time bucket. A decreasing trend indicates a storm is approaching." side="bottom" />
           </h3>
           <div className="h-44">
             {chartData.distance.length > 0 ? (

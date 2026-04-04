@@ -22,6 +22,7 @@ export default function RainCard({ data, trend }: { data: Observation | null; tr
     <WeatherCard
       title="Rain"
       icon={<RiRainyLine className="h-4 w-4" />}
+      info="Rainfall rate and accumulation totals. Rate measures current intensity; totals track accumulation over each period."
     >
       <div className="flex items-center gap-1.5">
         <span className="font-mono text-4xl font-semibold tabular-nums text-text">

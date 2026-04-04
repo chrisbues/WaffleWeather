@@ -20,6 +20,7 @@ export default function HumidityCard({ data, trend }: { data: Observation | null
     <WeatherCard
       title="Humidity"
       icon={<RiDropLine className="h-4 w-4" />}
+      info="Relative humidity — how saturated the air is with moisture. 30–60% is generally comfortable indoors."
     >
       <div className="flex items-center gap-1.5">
         <span className="font-mono text-4xl font-semibold tabular-nums text-text">

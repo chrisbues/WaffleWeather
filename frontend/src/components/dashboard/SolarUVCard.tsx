@@ -6,6 +6,7 @@ import type { TrendDirection } from "@/hooks/useTrends";
 import { cn, fmt } from "@/lib/utils";
 import WeatherCard from "./WeatherCard";
 import TrendIndicator from "./TrendIndicator";
+import InfoTip from "@/components/ui/InfoTip";
 
 function uvLevel(uv: number | null | undefined): {
   label: string;
@@ -26,6 +27,7 @@ export default function SolarUVCard({ data, solarTrend, uvTrend }: { data: Obser
     <WeatherCard
       title="Solar & UV"
       icon={<RiSunLine className="h-4 w-4" />}
+      info="Solar irradiance and UV radiation levels from the light sensor. Solar radiation drives heating; UV affects skin exposure."
     >
       <div className="grid grid-cols-2 gap-4">
         <div>
@@ -39,7 +41,7 @@ export default function SolarUVCard({ data, solarTrend, uvTrend }: { data: Obser
           </div>
         </div>
         <div>
-          <p className="text-xs text-text-faint">UV Index</p>
+          <p className="text-xs text-text-faint">UV Index <InfoTip text="WHO scale for ultraviolet radiation. 1–2 Low, 3–5 Moderate, 6–7 High, 8–10 Very High, 11+ Extreme. Sun protection needed at 3+." side="bottom" /></p>
           <div className="flex items-center gap-1">
             <span className="font-mono text-2xl font-semibold tabular-nums">
               {fmt(data?.uv_index, 1)}

@@ -8,6 +8,7 @@ import { convertPressure } from "@/lib/units";
 import { useUnits } from "@/providers/UnitsProvider";
 import WeatherCard from "./WeatherCard";
 import TrendIndicator from "./TrendIndicator";
+import InfoTip from "@/components/ui/InfoTip";
 
 export default function PressureCard({ data, trend }: { data: Observation | null; trend: TrendDirection }) {
   const { system } = useUnits();
@@ -19,6 +20,7 @@ export default function PressureCard({ data, trend }: { data: Observation | null
     <WeatherCard
       title="Pressure"
       icon={<RiDashboard3Line className="h-4 w-4" />}
+      info="Atmospheric pressure adjusted to sea level. Falling pressure often signals approaching storms; rising pressure suggests clearing."
     >
       <div className="flex items-center gap-1.5">
         <span className="font-mono text-4xl font-semibold tabular-nums text-text">
@@ -29,12 +31,12 @@ export default function PressureCard({ data, trend }: { data: Observation | null
       </div>
       <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
         <div>
-          <p className="text-xs text-text-faint">Absolute</p>
+          <p className="text-xs text-text-faint">Absolute <InfoTip text="Raw sensor pressure at your elevation, not adjusted for altitude." side="bottom" /></p>
           <p className="font-mono font-medium tabular-nums text-text-muted">{fmt(abs.value, decimals)} {abs.unit}</p>
         </div>
         {data?.zambretti_forecast && (
           <div>
-            <p className="text-xs text-text-faint">Forecast</p>
+            <p className="text-xs text-text-faint">Forecast <InfoTip text="Zambretti algorithm — predicts weather from the 3-hour pressure trend, wind direction, and season." side="bottom" /></p>
             <p className="text-sm font-medium text-text-muted">{data.zambretti_forecast}</p>
           </div>
         )}

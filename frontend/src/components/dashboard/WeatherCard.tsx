@@ -2,10 +2,12 @@
 
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import InfoTip from "@/components/ui/InfoTip";
 
 interface WeatherCardProps {
   title: string;
   icon: ReactNode;
+  info?: string;
   children: ReactNode;
   className?: string;
 }
@@ -13,6 +15,7 @@ interface WeatherCardProps {
 export default function WeatherCard({
   title,
   icon,
+  info,
   children,
   className,
 }: WeatherCardProps) {
@@ -26,6 +29,7 @@ export default function WeatherCard({
       <div className="mb-3 flex items-center gap-2 text-text-muted">
         {icon}
         <h3 className="text-xs font-semibold uppercase tracking-wider">{title}</h3>
+        {info && <InfoTip text={info} />}
       </div>
       {children}
     </div>

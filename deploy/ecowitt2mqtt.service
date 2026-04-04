@@ -6,10 +6,13 @@ Requires=mosquitto.service
 [Service]
 Type=exec
 User=ecowitt2mqtt
+EnvironmentFile=/opt/waffleweather/.env
 ExecStart=/opt/ecowitt2mqtt/venv/bin/ecowitt2mqtt \
     --mqtt-broker localhost \
     --mqtt-port 1883 \
     --mqtt-topic Gateway \
+    --mqtt-username ${WW_MQTT_USERNAME} \
+    --mqtt-password ${WW_MQTT_PASSWORD} \
     --mqtt-retain \
     --output-unit-system metric \
     --disable-calculated-data \

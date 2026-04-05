@@ -103,48 +103,61 @@ def feels_like(
 
 
 # ── Zambretti barometric forecast ────────────────────────────────────────────
+#
+# Implementation based on the pywws Zambretti algorithm by Jim Easterbrook,
+# which is itself derived from Beteljuice's JavaScript implementation.
+# Beteljuice owns an original 1915 Negretti & Zambra brass forecaster and
+# reverse-engineered the algorithm, expanding wind direction from the original
+# ~8 compass points to 16 for compatibility with modern weather stations.
+#
+# Reference chain:
+#   Original device: E.W. Kitchin / Negretti & Zambra, Patent 6276/1915
+#   Beteljuice:      beteljuice.co.uk/zambretti/forecast.html
+#   Honeysucklecottage: honeysucklecottage.me.uk (JS -> Python port)
+#   pywws:           github.com/jim-easterbrook/pywws (src/pywws/forecast.py)
 
-# Forecast lookup tables from the original Zambretti Forecaster (1915)
-_ZAMBRETTI_RISING = [
-    "Settled fine",
-    "Fine weather",
-    "Becoming fine",
-    "Fine, becoming less settled",
-    "Fine, possible showers",
-    "Fairly fine, improving",
-    "Fairly fine, possible showers early",
-    "Fairly fine, showery later",
-    "Showery early, improving",
-    "Changeable, mending",
-    "Fairly fine",
-]
+# Forecast letter codes from the original Zambretti Forecaster (A-Z)
+_ZAMBRETTI_FORECASTS = {
+    "A": "Settled fine",
+    "B": "Fine weather",
+    "C": "Becoming fine",
+    "D": "Fine, becoming less settled",
+    "E": "Fine, possible showers",
+    "F": "Fairly fine, improving",
+    "G": "Fairly fine, possible showers early",
+    "H": "Fairly fine, showery later",
+    "I": "Showery early, improving",
+    "J": "Changeable, mending",
+    "K": "Fairly fine, showers likely",
+    "L": "Rather unsettled clearing later",
+    "M": "Unsettled, probably improving",
+    "N": "Showery, bright intervals",
+    "O": "Showery, becoming less settled",
+    "P": "Changeable, some rain",
+    "Q": "Unsettled, short fine intervals",
+    "R": "Unsettled, rain later",
+    "S": "Unsettled, some rain",
+    "T": "Mostly very unsettled",
+    "U": "Occasional rain, worsening",
+    "V": "Rain at times, very unsettled",
+    "W": "Rain at frequent intervals",
+    "X": "Rain, very unsettled",
+    "Y": "Stormy, may improve",
+    "Z": "Stormy, much rain",
+}
 
-_ZAMBRETTI_STEADY = [
-    "Settled fine",
-    "Fine weather",
-    "Fine, possibly showers",
-    "Fairly fine, showers likely",
-    "Showery, bright intervals",
-    "Changeable, some rain",
-    "Unsettled, rain later",
-    "Rain at times, worse later",
-    "Rain at times, becoming very unsettled",
-    "Very unsettled, rain",
-]
+# Lookup tables mapping Z-index to forecast letter, per pressure trend
+_ZAMBRETTI_RISING = ("A", "B", "B", "C", "F", "G", "I", "J", "L", "M", "M", "Q", "T", "Y")
+_ZAMBRETTI_STEADY = ("A", "B", "B", "B", "E", "K", "N", "N", "P", "P", "S", "W", "W", "X", "X", "X", "Z")
+_ZAMBRETTI_FALLING = ("B", "D", "H", "O", "R", "U", "V", "X", "X", "Z")
 
-_ZAMBRETTI_FALLING = [
-    "Settled fine",
-    "Fine weather",
-    "Fine, becoming less settled",
-    "Fairly fine, showery later",
-    "Showery, bright intervals",
-    "Changeable, some rain",
-    "Unsettled, short fine intervals",
-    "Unsettled, rain later",
-    "Unsettled, rain at times",
-    "Very unsettled, foul",
-    "Stormy, much rain",
-]
+# 16-point wind direction adjustment (hPa), indexed 0=N through 15=NNW.
+# Northerly winds add pressure (fair bias), southerly subtract (unsettled).
+# Interpolated to 16 points by Beteljuice from the original ~8-point device.
+_WIND_ADJ = (
+    5.2, 4.2, 3.2, 1.05, -1.1, -3.15, -5.2, -8.35,
+    -11.5, -9.4, -7.3, -5.25, -3.2, -1.15, 0.9, 3.05,
+)
 
 
 def zambretti_forecast(
@@ -152,6 +165,7 @@ def zambretti_forecast(
     pressure_3h_ago_hpa: float | None,
     wind_dir: float | None = None,
     month: int | None = None,
+    north: bool = True,
 ) -> str | None:
     """Zambretti barometric pressure forecast (Negretti & Zambra, 1915).
 
@@ -165,41 +179,51 @@ def zambretti_forecast(
 
     delta = pressure_hpa - pressure_3h_ago_hpa
 
-    # Seasonal adjustment (Northern Hemisphere) — summer gets a slight boost
-    seasonal_adj = 0.0
-    if month is not None:
-        if month in (4, 5, 6, 7, 8, 9):  # Apr–Sep
-            seasonal_adj = 2.0
-        elif month in (10, 11, 12, 1, 2, 3):  # Oct–Mar
-            seasonal_adj = -2.0
-
-    # Wind direction adjustment — northerly winds tend to bring fair weather,
-    # southerly winds tend to bring unsettled weather (Northern Hemisphere)
-    wind_adj = 0.0
-    if wind_dir is not None:
-        if 315 <= wind_dir or wind_dir < 45:
-            wind_adj = -2.0  # N: fair bias
-        elif 135 <= wind_dir < 225:
-            wind_adj = 2.0   # S: unsettled bias
-
-    # Zambretti Z-number: map pressure (950–1050 hPa) to 0–(n-1) index
-    p = max(950.0, min(1050.0, pressure_hpa + seasonal_adj + wind_adj))
-
-    if delta > 1.6:
-        # Rising pressure
-        z = round(127.0 - 0.12 * p)
-        z = max(0, min(z, len(_ZAMBRETTI_RISING) - 1))
-        return _ZAMBRETTI_RISING[z]
-    elif delta < -1.6:
-        # Falling pressure
-        z = round(130.0 - 0.12 * p)
-        z = max(0, min(z, len(_ZAMBRETTI_FALLING) - 1))
-        return _ZAMBRETTI_FALLING[z]
+    # Determine trend — threshold is 0.3 hPa over 3 hours (0.1 hPa/hour)
+    if delta >= 0.3:
+        trend = 1   # rising
+    elif delta <= -0.3:
+        trend = -1  # falling
     else:
-        # Steady pressure
-        z = round(144.0 - 0.13 * p)
+        trend = 0   # steady
+
+    # Start with current sea-level pressure
+    p = pressure_hpa
+
+    # Seasonal adjustment — summer biases rising toward fair, falling toward
+    # unsettled. "S" and "W" on the original device = Summer / Winter.
+    if month is not None:
+        summer = north == (4 <= month <= 9)
+        if summer:
+            if trend > 0:
+                p += 3.2
+            elif trend < 0:
+                p -= 3.2
+
+    # 16-point wind direction adjustment (Northern Hemisphere convention,
+    # rotated 180 degrees for Southern Hemisphere)
+    if wind_dir is not None:
+        wind_idx = round(wind_dir / 22.5) % 16
+        if not north:
+            wind_idx = (wind_idx + 8) % 16
+        p += _WIND_ADJ[wind_idx]
+
+    # Clamp to valid barometric range
+    p = max(950.0, min(1050.0, p))
+
+    # Compute Z-index using per-trend linear formulas and look up forecast
+    if trend > 0:
+        z = int(0.1740 * (1031.40 - p) + 0.5)
+        z = max(0, min(z, len(_ZAMBRETTI_RISING) - 1))
+        return _ZAMBRETTI_FORECASTS[_ZAMBRETTI_RISING[z]]
+    elif trend < 0:
+        z = int(0.1553 * (1029.95 - p) + 0.5)
+        z = max(0, min(z, len(_ZAMBRETTI_FALLING) - 1))
+        return _ZAMBRETTI_FORECASTS[_ZAMBRETTI_FALLING[z]]
+    else:
+        z = int(0.2314 * (1030.81 - p) + 0.5)
         z = max(0, min(z, len(_ZAMBRETTI_STEADY) - 1))
-        return _ZAMBRETTI_STEADY[z]
+        return _ZAMBRETTI_FORECASTS[_ZAMBRETTI_STEADY[z]]
 
 
 def _approximate_mrt(temp_c: float, solar_wm2: float) -> float:

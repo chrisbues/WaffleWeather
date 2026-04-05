@@ -162,6 +162,7 @@ async def _handle_message(
                     best,
                     wind_dir=broadcast_data.get("wind_dir"),
                     month=ts_dt.month,
+                    north=settings.station_latitude is None or settings.station_latitude >= 0,
                 )
                 if forecast is not None:
                     broadcast_data["zambretti_forecast"] = forecast

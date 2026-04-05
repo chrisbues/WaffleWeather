@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import Settings
 from app.database import get_db
 from app.models.observation import WeatherObservation
 from app.schemas.observation import ObservationPageSchema, ObservationSchema
@@ -53,11 +54,13 @@ async def get_latest_observation(
         past_result = await db.execute(past_q)
         pressure_3h = past_result.scalar_one_or_none()
         now = obs.timestamp
+        _settings = Settings()
         schema.zambretti_forecast = zambretti_forecast(
             schema.pressure_rel,
             pressure_3h,
             wind_dir=schema.wind_dir,
             month=now.month,
+            north=_settings.station_latitude is None or _settings.station_latitude >= 0,
         )
 
     return schema

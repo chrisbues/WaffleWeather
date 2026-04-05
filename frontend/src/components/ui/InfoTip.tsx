@@ -32,13 +32,14 @@ export default function InfoTip({ text, side = "top" }: InfoTipProps) {
     };
   }, [open]);
 
-  // Reset offset when closing so next open starts fresh
+  // Reset positioning when closing so next open starts fresh
   useEffect(() => {
     if (!open) {
       prevOffset.current = 0;
       setLeftOffset(0);
+      setPlacement(side);
     }
-  }, [open]);
+  }, [open, side]);
 
   // Auto-flip vertically and nudge horizontally if tooltip would go off-screen
   // useLayoutEffect runs before paint so the tooltip doesn't visibly snap

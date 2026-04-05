@@ -281,6 +281,8 @@ body::after {
 /* ── Page header fade-in ─────────────────────────────────────── */
 
 .page-header {
+  position: relative;
+  z-index: 10;
   animation: fade-in 0.4s ease-out both;
 }
 

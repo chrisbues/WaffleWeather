@@ -6,6 +6,7 @@ import { useGetWindRoseData } from "@/generated/aggregates/aggregates";
 import type { WindRoseDataPoint } from "@/generated/models";
 import WindRoseChart from "@/components/wind-rose/WindRoseChart";
 import InfoTip from "@/components/ui/InfoTip";
+import { useUnits } from "@/providers/UnitsProvider";
 
 type TimeRange = "24h" | "7d" | "30d" | "1y";
 
@@ -16,12 +17,12 @@ const RANGES: { value: TimeRange; label: string }[] = [
   { value: "1y", label: "1 Year" },
 ];
 
-const SPEED_BANDS = [
-  { label: "0-5 km/h", color: "var(--color-primary-light)" },
-  { label: "5-15 km/h", color: "var(--color-primary)" },
-  { label: "15-25 km/h", color: "#c88a30" },
-  { label: "25-40 km/h", color: "#c45050" },
-  { label: "40+ km/h", color: "#8b2252" },
+const SPEED_BAND_THRESHOLDS = [
+  { metric: "0–5", imperial: "0–3", color: "var(--color-primary-light)" },
+  { metric: "5–15", imperial: "3–9", color: "var(--color-primary)" },
+  { metric: "15–25", imperial: "9–16", color: "#c88a30" },
+  { metric: "25–40", imperial: "16–25", color: "#c45050" },
+  { metric: "40+", imperial: "25+", color: "#8b2252" },
 ];
 
 function getTimeRange(range: TimeRange): { start: string; end: string } {
@@ -38,8 +39,10 @@ function getTimeRange(range: TimeRange): { start: string; end: string } {
 }
 
 export default function WindRosePage() {
+  const { system } = useUnits();
   const [range, setRange] = useState<TimeRange>("7d");
   const { start, end } = useMemo(() => getTimeRange(range), [range]);
+  const speedUnit = system === "metric" ? "km/h" : "mph";
 
   const { data: response, isLoading } = useGetWindRoseData({ start, end });
   const data = (response?.data as WindRoseDataPoint[] | undefined) ?? [];
@@ -91,13 +94,15 @@ export default function WindRosePage() {
               Speed Bands
             </h3>
             <div className="space-y-2">
-              {SPEED_BANDS.map((b) => (
-                <div key={b.label} className="flex items-center gap-2 text-sm">
+              {SPEED_BAND_THRESHOLDS.map((b) => (
+                <div key={b.metric} className="flex items-center gap-2 text-sm">
                   <span
                     className="inline-block h-3 w-3 rounded-sm"
                     style={{ backgroundColor: b.color }}
                   />
-                  <span className="font-mono text-text-muted">{b.label}</span>
+                  <span className="font-mono text-text-muted">
+                    {system === "metric" ? b.metric : b.imperial} {speedUnit}
+                  </span>
                 </div>
               ))}
             </div>

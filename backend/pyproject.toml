@@ -20,8 +20,10 @@ dependencies = [
 dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.24",
+    "pytest-cov>=6.0",
     "httpx>=0.28",
     "ruff>=0.9",
+    "schemathesis>=3.38",
 ]
 
 [tool.setuptools.packages.find]
@@ -33,3 +35,5 @@ line-length = 100
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "--strict-markers -ra"

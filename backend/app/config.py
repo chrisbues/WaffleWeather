@@ -19,4 +19,4 @@ class Settings(BaseSettings):
     station_longitude: float | None = None
     station_altitude: float | None = None  # meters above sea level
 
-    model_config = {"env_file": [".env", "../.env"], "env_prefix": "WW_"}
+    model_config = {"env_file": [".env", "../.env"], "env_prefix": "WW_", "extra": "ignore"}

@@ -1,0 +1,53 @@
+import { describe, expect, it } from "vitest";
+import { screen } from "@testing-library/react";
+import { renderWithProviders } from "@/test/wrappers";
+import { makeObservation } from "@/test/fixtures";
+import TemperatureCard from "./TemperatureCard";
+
+describe("TemperatureCard", () => {
+  it("renders temperature value", () => {
+    renderWithProviders(<TemperatureCard data={makeObservation()} trend={null} />);
+    expect(screen.getByText("22.5")).toBeInTheDocument();
+    expect(screen.getByText("°C")).toBeInTheDocument();
+  });
+
+  it("renders dewpoint comfort level", () => {
+    renderWithProviders(
+      <TemperatureCard data={makeObservation({ dewpoint: 15.5 })} trend={null} />,
+    );
+    expect(screen.getByText("Slightly humid")).toBeInTheDocument();
+  });
+
+  it("renders 'Dry' for low dewpoint", () => {
+    renderWithProviders(
+      <TemperatureCard data={makeObservation({ dewpoint: 5.0 })} trend={null} />,
+    );
+    expect(screen.getByText("Dry")).toBeInTheDocument();
+  });
+
+  it("renders 'Comfortable' for moderate dewpoint", () => {
+    renderWithProviders(
+      <TemperatureCard data={makeObservation({ dewpoint: 12.0 })} trend={null} />,
+    );
+    expect(screen.getByText("Comfortable")).toBeInTheDocument();
+  });
+
+  it("renders 'Miserable' for very high dewpoint", () => {
+    renderWithProviders(
+      <TemperatureCard data={makeObservation({ dewpoint: 25.0 })} trend={null} />,
+    );
+    expect(screen.getByText("Miserable")).toBeInTheDocument();
+  });
+
+  it("handles null data gracefully", () => {
+    renderWithProviders(<TemperatureCard data={null} trend={null} />);
+    expect(screen.getByText("Temperature")).toBeInTheDocument();
+    // Should show em dashes
+    expect(screen.getAllByText("\u2014").length).toBeGreaterThan(0);
+  });
+
+  it("renders trend indicator", () => {
+    renderWithProviders(<TemperatureCard data={makeObservation()} trend="up" />);
+    expect(screen.getByLabelText("Trending up")).toBeInTheDocument();
+  });
+});

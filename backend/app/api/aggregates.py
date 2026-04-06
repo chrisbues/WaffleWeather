@@ -97,7 +97,7 @@ _CALENDAR_METRICS = {
 @router.get("/calendar", response_model=list[CalendarDataPointSchema])
 async def get_calendar_data(
     metric: str = Query(...),
-    year: int | None = Query(None),
+    year: int | None = Query(None, ge=1, le=9999),
     station_id: str | None = Query(None),
     db: AsyncSession = Depends(get_db),
 ):

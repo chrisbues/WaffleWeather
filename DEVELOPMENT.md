@@ -21,7 +21,7 @@ WaffleWeather/
 │   │   └── services/ # Business logic (derived calcs, broadcasting)
 │   ├── alembic/      # Database migrations
 │   └── tests/        # pytest test suite
-├── frontend/         # Next.js 16 + React 19 + TanStack Query
+├── frontend/         # Next.js 16 + React 19 + uPlot + TanStack Query
 │   └── src/
 │       ├── app/          # Next.js pages
 │       ├── components/   # UI components (dashboard cards, layout, etc.)

@@ -2,17 +2,6 @@
 
 import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-} from "recharts";
 import type { Observation, Station, LightningSummary, LightningEventPage } from "@/generated/models";
 import { useGetLatestObservation } from "@/generated/observations/observations";
 import { useListStations } from "@/generated/stations/stations";
@@ -22,6 +11,14 @@ import { RiFlashlightLine } from "@remixicon/react";
 import { fmt, timeAgo } from "@/lib/utils";
 import { convertDistance } from "@/lib/units";
 import { useUnits } from "@/providers/UnitsProvider";
+import { useResolvedColors } from "@/hooks/useResolvedColors";
+import { toColumnar } from "@/lib/uplot-data";
+import UPlotChart from "@/components/charts/UPlotChart";
+import {
+  strikeActivityOpts,
+  stormDistanceOpts,
+  type ResolvedColors,
+} from "@/components/charts/chartConfigs";
 import InfoTip from "@/components/ui/InfoTip";
 
 const LightningMap = dynamic(
@@ -36,15 +33,16 @@ const RANGES: { value: TimeRange; label: string }[] = [
   { value: "30d", label: "30 Days" },
 ];
 
-const tooltipStyle = {
-  background: "var(--color-surface-alt)",
-  border: "1px solid var(--color-border)",
-  borderRadius: "8px",
-  fontSize: "12px",
-};
+const COLOR_VARS = [
+  "--color-border",
+  "--color-text-faint",
+  "--color-surface-alt",
+  "--color-primary",
+  "--color-warning",
+];
 
-function formatBucket(value: string, range: TimeRange) {
-  const d = new Date(value);
+function formatBucket(unix: number, range: TimeRange): string {
+  const d = new Date(unix * 1000);
   if (range === "24h") {
     return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }
@@ -71,6 +69,24 @@ export default function LightningPage() {
   const hasLightning =
     data?.lightning_distance != null && data.lightning_distance > 0;
   const dist = convertDistance(data?.lightning_distance, system);
+
+  // Resolved colors for canvas
+  const rawColors = useResolvedColors(COLOR_VARS);
+  const colors: ResolvedColors = useMemo(
+    () => ({
+      border: rawColors["--color-border"],
+      textFaint: rawColors["--color-text-faint"],
+      surfaceAlt: rawColors["--color-surface-alt"],
+      primary: rawColors["--color-primary"],
+      warning: rawColors["--color-warning"],
+    }),
+    [rawColors],
+  );
+
+  const tickFmt = useMemo(
+    () => (v: number) => formatBucket(v, range),
+    [range],
+  );
 
   // Summary for the selected time range
   const summaryParams = useMemo(() => {
@@ -108,6 +124,20 @@ export default function LightningPage() {
         })),
     };
   }, [summary, system]);
+
+  // uPlot columnar data
+  const strikeData = useMemo(
+    () => toColumnar(chartData.hourly, "time", ["strikes"]),
+    [chartData.hourly],
+  );
+  const distanceData = useMemo(
+    () => toColumnar(chartData.distance, "time", ["distance"]),
+    [chartData.distance],
+  );
+
+  // Chart options
+  const strikeOpts = useMemo(() => strikeActivityOpts(colors, tickFmt), [colors, tickFmt]);
+  const distOpts = useMemo(() => stormDistanceOpts(colors, tickFmt), [colors, tickFmt]);
 
   const distUnit = system === "metric" ? "km" : "mi";
 
@@ -213,22 +243,7 @@ export default function LightningPage() {
           </h3>
           <div className="h-44">
             {chartData.hourly.length > 0 ? (
-              <ResponsiveContainer>
-                <BarChart data={chartData.hourly}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                  <XAxis
-                    dataKey="time"
-                    tickFormatter={(v) => formatBucket(v, range)}
-                    tick={{ fontSize: 10 }}
-                  />
-                  <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
-                  <Tooltip
-                    labelFormatter={(v) => new Date(v).toLocaleString()}
-                    contentStyle={tooltipStyle}
-                  />
-                  <Bar dataKey="strikes" fill="var(--color-warning)" radius={[2, 2, 0, 0]} name="Strikes" />
-                </BarChart>
-              </ResponsiveContainer>
+              <UPlotChart options={strikeOpts} data={strikeData} />
             ) : (
               <div className="flex h-full items-center justify-center text-sm text-text-faint">
                 No lightning activity
@@ -244,30 +259,7 @@ export default function LightningPage() {
           </h3>
           <div className="h-44">
             {chartData.distance.length > 0 ? (
-              <ResponsiveContainer>
-                <LineChart data={chartData.distance}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                  <XAxis
-                    dataKey="time"
-                    tickFormatter={(v) => formatBucket(v, range)}
-                    tick={{ fontSize: 10 }}
-                  />
-                  <YAxis tick={{ fontSize: 10 }} />
-                  <Tooltip
-                    labelFormatter={(v) => new Date(v).toLocaleString()}
-                    contentStyle={tooltipStyle}
-                    formatter={(v) => [`${v} ${distUnit}`, "Distance"]}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="distance"
-                    stroke="var(--color-primary)"
-                    strokeWidth={2}
-                    dot={{ r: 2 }}
-                    name="Distance"
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+              <UPlotChart options={distOpts} data={distanceData} />
             ) : (
               <div className="flex h-full items-center justify-center text-sm text-text-faint">
                 No distance data

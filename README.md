@@ -20,7 +20,7 @@ WaffleWeather was built to fill that gap: a modern, good-looking dashboard that 
 
 **Wind Rose** — Custom SVG polar chart breaking down wind patterns by direction and speed across 16 compass sectors. Configurable time ranges from 24 hours to a full year.
 
-**History** — Time-series charts with automatic resolution scaling (raw data for 24h, hourly aggregates for a week, daily for a month, monthly for a year). Plus a GitHub-style calendar heatmap for any metric.
+**History** — Time-series charts with automatic resolution scaling (raw data for 24h, hourly aggregates for a week, daily for a month, monthly for a year). Synchronized crosshairs across all charts and CloudWatch-style drag-to-zoom. Plus a GitHub-style calendar heatmap for any metric.
 
 **Diagnostics** — Battery levels, gateway stats, firmware info, and connection status. Useful for keeping an eye on sensor health.
 
@@ -57,7 +57,7 @@ Everything runs natively on the Pi — no Docker, no containers. A Raspberry Pi 
 |-------|-----------|
 | Backend | FastAPI, Python 3.12+, SQLAlchemy async, aiomqtt, Alembic |
 | Database | TimescaleDB (PostgreSQL 17) — hypertables, continuous aggregates, compression |
-| Frontend | Next.js 16 (App Router), TypeScript, Recharts, TanStack Query |
+| Frontend | Next.js 16 (App Router), TypeScript, uPlot (Canvas charts), TanStack Query |
 | API Contract | OpenAPI 3.1 YAML (hand-written, single source of truth) |
 | Client Codegen | Orval — generates typed TanStack Query hooks from the OpenAPI spec |
 | Real-time | WebSocket with auto-reconnect and exponential backoff |

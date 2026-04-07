@@ -4,7 +4,7 @@ A self-hosted weather station dashboard built for [Ecowitt](https://www.ecowitt.
 
 Named after a very good dog.
 
-![WaffleWeather Observatory](dashboard-desktop-full.png)
+![WaffleWeather Observatory](screenshots/observatory.png)
 
 ## Why?
 
@@ -30,8 +30,9 @@ WaffleWeather was built to fill that gap: a modern, good-looking dashboard that 
 
 **Tooltips Everywhere** — Click-to-toggle info tips on every card explaining what each metric means and how it's calculated.
 
-![Lightning page](lightning-page-desktop.png)
-![Wind Rose](phase5-windrose-loaded.png)
+![Lightning page](screenshots/lightning.png)
+![History charts](screenshots/history.png)
+![Wind Rose](screenshots/wind-rose.png)
 
 ## Architecture
 

@@ -36,8 +36,9 @@ htmlcov/
 .claude/
 .playwright-mcp/
 
-# Screenshots from Playwright testing
+# Playwright testing artifacts
 *.png
+!screenshots/*.png
 
 # Deploy (contains local hostname)
 scripts/deploy.sh

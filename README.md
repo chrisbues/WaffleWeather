@@ -16,6 +16,10 @@ WaffleWeather was built to fill that gap: a modern, good-looking dashboard that 
 
 **Observatory Dashboard** — 10 live-updating cards covering temperature, humidity, wind (with SVG compass rose), barometric pressure, rain, solar/UV, lightning, thermal comfort (UTCI), sun position, and moon phase. Every value updates in real time over WebSocket. 15-minute trend arrows show which way things are heading.
 
+**VFD Console** — A Davis Vantage-inspired all-in-one display with an amber vacuum fluorescent aesthetic. Wind direction dot on a compass ring with speed centered inside, 24-hour barometric pressure dot chart, Zambretti forecast with dot-matrix text (Dotrice font), DSEG7 seven-segment numerics, phosphor-glow effects, and a scrolling ticker. Everything on one screen, no scrolling.
+
+![VFD Console](screenshots/console.png)
+
 **Lightning Tracker** — Interactive map (Leaflet) showing strike distance radius, plus charts for strike activity and storm approach/retreat patterns. Detected events are stored separately so you can browse storm history.
 
 **Wind Rose** — Custom SVG polar chart breaking down wind patterns by direction and speed across 16 compass sectors. Configurable time ranges from 24 hours to a full year.

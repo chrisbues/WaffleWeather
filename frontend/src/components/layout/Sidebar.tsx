@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   RiDashboardLine,
+  RiDashboard2Line,
   RiFlashlightLine,
   RiHistoryLine,
   RiCompassLine,
@@ -17,6 +18,7 @@ import { useUnits } from "@/providers/UnitsProvider";
 
 const navItems = [
   { href: "/", label: "Observatory", icon: RiDashboardLine },
+  { href: "/console", label: "Console", icon: RiDashboard2Line },
   { href: "/lightning", label: "Lightning", icon: RiFlashlightLine },
   { href: "/wind-rose", label: "Wind Rose", icon: RiCompassLine },
   { href: "/history", label: "History", icon: RiHistoryLine },

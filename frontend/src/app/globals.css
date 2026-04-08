@@ -352,6 +352,112 @@ body::after {
   font-weight: 500;
 }
 
+/* ── VFD Console ─────────────────────────────────────────────── */
+
+.vfd-glow {
+  color: #e8c49a;
+  text-shadow:
+    0 0 4px rgba(232, 196, 154, 0.7),
+    0 0 8px rgba(212, 165, 116, 0.6),
+    0 0 14px rgba(212, 165, 116, 0.45),
+    0 0 22px rgba(212, 165, 116, 0.3),
+    0 0 32px rgba(212, 165, 116, 0.15);
+}
+
+.vfd-dot-matrix {
+  font-family: var(--font-dotrice), var(--font-ibm-plex-mono), monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #e8c49a;
+  text-shadow:
+    0 0 4px rgba(232, 196, 154, 0.7),
+    0 0 8px rgba(212, 165, 116, 0.5),
+    0 0 16px rgba(212, 165, 116, 0.3);
+}
+
+/* Strip text-shadow from animated elements to avoid repaint every frame. */
+.ticker-scroll.vfd-dot-matrix {
+  text-shadow: none;
+  will-change: transform;
+}
+
+.vfd-glow-dim {
+  color: #a88860;
+  text-shadow:
+    0 0 4px rgba(168, 136, 96, 0.3),
+    0 0 8px rgba(168, 136, 96, 0.2);
+}
+
+.vfd-ghost {
+  color: rgba(212, 165, 116, 0.12);
+}
+
+/* Phosphor pulse: use opacity (compositor-only, no repaint) instead of
+   animating text-shadow which forces a full repaint every frame. */
+@keyframes phosphor-pulse {
+  0%, 100% { opacity: 0.88; }
+  50% { opacity: 1; }
+}
+
+.vfd-pulse {
+  animation: phosphor-pulse 4s ease-in-out infinite;
+  will-change: opacity;
+}
+
+.vfd-scanlines {
+  position: relative;
+}
+
+.vfd-scanlines::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.06) 2px,
+    rgba(0, 0, 0, 0.06) 4px
+  );
+  z-index: 1;
+}
+
+.console-bezel {
+  background: #131110;
+  border: 2px solid #2a2522;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 0 40px -8px rgba(212, 165, 116, 0.08),
+    0 4px 24px -4px rgba(0, 0, 0, 0.5);
+}
+
+.console-zone {
+  border: 1px solid rgba(212, 165, 116, 0.08);
+  background: rgba(16, 14, 12, 0.7);
+}
+
+@keyframes ticker-scroll {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+.ticker-scroll {
+  display: inline-block;
+  white-space: nowrap;
+  animation: ticker-scroll 30s linear infinite;
+  will-change: transform;
+}
+
+.vfd-svg-glow {
+  filter: drop-shadow(0 0 3px rgba(212, 165, 116, 0.4));
+}
+
+.console-compass-dot {
+  transition: transform 0.7s cubic-bezier(0.4, 2, 0.55, 1);
+}
+
 /* ── Leaflet overrides for Warm Observatory ──────────────────── */
 
 .leaflet-container {

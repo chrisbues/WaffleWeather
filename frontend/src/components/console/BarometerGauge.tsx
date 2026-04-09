@@ -64,7 +64,7 @@ export default function BarometerGauge({
   system,
 }: BarometerGaugeProps) {
   const isMetric = system === "metric";
-  const decimals = isMetric ? 1 : 2;
+  const decimals = 2;
   const current = convertPressure(pressure, system);
 
   const minuteKey = Math.floor(Date.now() / 60_000);

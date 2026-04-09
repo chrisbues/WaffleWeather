@@ -14,10 +14,10 @@ interface UPlotChartProps {
 
 function fmtVal(v: number): string {
   if (v % 1 === 0) return v.toString();
-  return Math.abs(v) < 10 ? v.toFixed(2) : v.toFixed(1);
+  return v.toFixed(1);
 }
 
-function tooltipPlugin(): uPlot.Plugin {
+function tooltipPlugin(seriesValueFns: Set<number>): uPlot.Plugin {
   let tooltip: HTMLDivElement;
 
   function init(u: uPlot) {
@@ -51,10 +51,11 @@ function tooltipPlugin(): uPlot.Plugin {
       if (val == null) continue;
       const color =
         typeof s.stroke === "function" ? s.stroke(u, i) : s.stroke;
+      const display = seriesValueFns.has(i) && typeof s.value === "function" ? s.value(u, val, i, idx) : fmtVal(val);
       rows += `<div class="uplot-tooltip-row">
         <span class="uplot-tooltip-dot" style="background:${color}"></span>
         <span class="uplot-tooltip-label">${s.label}:</span>
-        <span class="uplot-tooltip-value">${fmtVal(val)}</span>
+        <span class="uplot-tooltip-value">${display}</span>
       </div>`;
     }
 
@@ -116,7 +117,13 @@ export default function UPlotChart({
       ...optsRef.current,
       width,
       height,
-      plugins: [tooltipPlugin()],
+      plugins: [tooltipPlugin(
+        new Set(
+          (optsRef.current.series ?? [])
+            .map((s, i) => (s.value != null ? i : -1))
+            .filter((i) => i >= 0),
+        ),
+      )],
       cursor: {
         ...optsRef.current.cursor,
         drag: { x: true, y: false, setScale: false },

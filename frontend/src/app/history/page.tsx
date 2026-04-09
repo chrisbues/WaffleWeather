@@ -126,7 +126,8 @@ export default function HistoryPage() {
   const humOpts = useMemo(() => humidityOpts(colors, tickFmt), [colors, tickFmt]);
   const presOpts = useMemo(() => pressureOpts(colors, tickFmt), [colors, tickFmt]);
   const wndOpts = useMemo(() => windOpts(colors, tickFmt), [colors, tickFmt]);
-  const rnOpts = useMemo(() => rainOpts(colors, tickFmt), [colors, tickFmt]);
+  const rainDecimals = system === "imperial" ? 3 : 1;
+  const rnOpts = useMemo(() => rainOpts(colors, tickFmt, rainDecimals), [colors, tickFmt, rainDecimals]);
   const suvOpts = useMemo(() => solarUvOpts(colors, tickFmt), [colors, tickFmt]);
 
   // Zoom

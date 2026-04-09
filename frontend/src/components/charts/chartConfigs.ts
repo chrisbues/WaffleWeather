@@ -154,6 +154,7 @@ export function windOpts(
 export function rainOpts(
   colors: ResolvedColors,
   tickFmt: TickFormatter,
+  decimals = 1,
 ): Omit<uPlot.Options, "width" | "height"> {
   const bars = uPlot.paths.bars!({ size: [0.6, 100], radius: 3 });
   return {
@@ -165,6 +166,7 @@ export function rainOpts(
         stroke: "#6a9ac4",
         fill: "#6a9ac4",
         paths: bars,
+        value: (_u: uPlot, v: number | null) => v != null ? v.toFixed(decimals) : "--",
       },
     ],
   } as uPlot.Options;

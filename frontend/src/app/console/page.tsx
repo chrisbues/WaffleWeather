@@ -161,15 +161,16 @@ export default function ConsolePage() {
   const rainRate = convertRainRate(data?.rain_rate, system);
   const rainDaily = convertRain(data?.rain_daily, system);
   const rainMonthly = convertRain(data?.rain_monthly, system);
+  const rainDp = system === "imperial" ? 3 : 1;
 
   // ── Ticker text ───────────────────────────────────────────────
   const tickerText = [
     data?.zambretti_forecast,
     temp.value != null ? `${fmt(temp.value)}${temp.unit}` : null,
     data?.wind_dir != null ? `${degToCompass(data.wind_dir)} ${fmt(convertSpeed(data?.wind_speed, system).value)} ${convertSpeed(data?.wind_speed, system).unit}` : null,
-    data?.pressure_rel != null ? `${fmt(convertPressure(data.pressure_rel, system).value, system === "metric" ? 1 : 2)} ${convertPressure(data.pressure_rel, system).unit}` : null,
+    data?.pressure_rel != null ? `${fmt(convertPressure(data.pressure_rel, system).value, 2)} ${convertPressure(data.pressure_rel, system).unit}` : null,
     data?.humidity_outdoor != null ? `Humidity ${data.humidity_outdoor}%` : null,
-    rainDaily.value != null ? `Rain today ${fmt(rainDaily.value, 1)} ${rainDaily.unit}` : null,
+    rainDaily.value != null ? `Rain today ${fmt(rainDaily.value, rainDp)} ${rainDaily.unit}` : null,
   ]
     .filter(Boolean)
     .join(" \u00B7 ");
@@ -258,11 +259,11 @@ export default function ConsolePage() {
           <div className="console-zone vfd-scanlines rounded-none p-4">
             <ZoneLabel>Rain</ZoneLabel>
             <div className="mt-2">
-              <VFDDisplay value={fmt(rainRate.value, 1)} size="lg" unit={rainRate.unit} pulse />
+              <VFDDisplay value={fmt(rainRate.value, rainDp)} size="lg" unit={rainRate.unit} pulse />
             </div>
             <div className="mt-3 grid grid-cols-2 gap-2">
-              <SubValue label="Today" value={`${fmt(rainDaily.value, 1)} ${rainDaily.unit}`} />
-              <SubValue label="Month" value={`${fmt(rainMonthly.value, 1)} ${rainMonthly.unit}`} />
+              <SubValue label="Today" value={`${fmt(rainDaily.value, rainDp)} ${rainDaily.unit}`} />
+              <SubValue label="Month" value={`${fmt(rainMonthly.value, rainDp)} ${rainMonthly.unit}`} />
             </div>
           </div>
         </div>

@@ -14,29 +14,47 @@ WaffleWeather was built to fill that gap: a modern, good-looking dashboard that 
 
 ## Features
 
-**Observatory Dashboard** — 10 live-updating cards covering temperature, humidity, wind (with SVG compass rose), barometric pressure, rain, solar/UV, lightning, thermal comfort (UTCI), sun position, and moon phase. Every value updates in real time over WebSocket. 15-minute trend arrows show which way things are heading.
+### Observatory
 
-**VFD Console** — A Davis Vantage-inspired all-in-one display with an amber vacuum fluorescent aesthetic. Wind direction dot on a compass ring with speed centered inside, 24-hour barometric pressure dot chart, Zambretti forecast with dot-matrix text (Dotrice font), DSEG7 seven-segment numerics, phosphor-glow effects, and a scrolling ticker. Everything on one screen, no scrolling.
+The main dashboard with 10 live-updating cards: temperature (with daily high/low), humidity, wind (SVG compass rose and Beaufort scale), barometric pressure (with Zambretti forecast), rain, solar/UV, lightning, thermal comfort (UTCI), sun position, and moon phase. Every value updates in real time over WebSocket with 15-minute trend arrows. Click-to-toggle info tips on every card explain what each metric means and how it's calculated.
+
+### VFD Console
+
+A Davis Vantage-inspired all-in-one display with an amber vacuum fluorescent aesthetic. Features a wind direction dot on a compass ring with speed centered inside, 24-hour barometric pressure dot chart, Zambretti forecast with large SVG weather icons, DSEG7 seven-segment numerics, Dotrice dot-matrix text, phosphor-glow effects, and a scrolling conditions ticker. Everything on one screen, no scrolling required.
 
 ![VFD Console](screenshots/console.png)
 
-**Lightning Tracker** — Interactive map (Leaflet) showing strike distance radius, plus charts for strike activity and storm approach/retreat patterns. Detected events are stored separately so you can browse storm history.
+### Lightning Tracker
 
-**Wind Rose** — Custom SVG polar chart breaking down wind patterns by direction and speed across 16 compass sectors. Configurable time ranges from 24 hours to a full year.
+Interactive Leaflet map showing your station location and last strike distance radius. Below the map: current sensor stats (count, distance, time since last strike), a strike activity bar chart, and a storm distance line chart showing approach/retreat patterns. Detected events are stored in a separate hypertable so you can browse storm history in the timeline.
 
-**History** — Time-series charts with automatic resolution scaling (raw data for 24h, hourly aggregates for a week, daily for a month, monthly for a year). Synchronized crosshairs across all charts and CloudWatch-style drag-to-zoom. Plus a GitHub-style calendar heatmap for any metric.
+![Lightning Tracker](screenshots/lightning.png)
+
+### Wind Rose
+
+A custom SVG polar chart breaking down wind patterns by direction and speed across 16 compass sectors and 5 speed bands. Configurable time ranges from 24 hours to a full year, with statistics for dominant direction and peak gust.
+
+![Wind Rose](screenshots/wind-rose.png)
+
+### History
+
+Time-series charts for temperature, humidity, pressure, wind, rain, and solar/UV with automatic resolution scaling — raw data for 24 hours, hourly aggregates for a week, daily for a month, monthly for a year. Synchronized crosshairs across all charts and drag-to-zoom. Hover over any chart to see precise values in the floating tooltip.
+
+![History Charts](screenshots/history-tooltip.png)
+
+### Calendar Heatmap
+
+A GitHub-style calendar heatmap for any metric (temperature, humidity, rain, wind, pressure, solar, lightning). Switch between metrics using the tab bar. Hover over any day to see a detailed breakdown — temperature and humidity show daily low, average, and high; other metrics show the day's value with units.
+
+![Calendar Heatmap](screenshots/calendar.png)
+
+### Additional Features
 
 **Diagnostics** — Battery levels, gateway stats, firmware info, and connection status. Useful for keeping an eye on sensor health.
 
-**Unit Toggle** — Global metric/imperial switch that converts everything on the fly. All data is stored as metric; conversions happen in the browser.
+**Unit Toggle** — Global metric/imperial switch in the sidebar that converts everything on the fly. All data is stored as metric; conversions happen in the browser with precision tuned to sensor resolution.
 
 **Derived Meteorology** — Dew point (Magnus-Tetens), heat index (full NWS Rothfusz), wind chill, composite feels-like, UTCI thermal comfort (Brode polynomial), and Zambretti barometric forecast (based on the [pywws implementation](https://github.com/jim-easterbrook/pywws) of the 1915 Negretti & Zambra algorithm, with 16-point wind direction table and automatic hemisphere detection from station latitude). Computed on the fly, never stored stale.
-
-**Tooltips Everywhere** — Click-to-toggle info tips on every card explaining what each metric means and how it's calculated.
-
-![Lightning page](screenshots/lightning.png)
-![History charts](screenshots/history.png)
-![Wind Rose](screenshots/wind-rose.png)
 
 ## Architecture
 

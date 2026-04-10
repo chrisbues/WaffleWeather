@@ -11,7 +11,7 @@ function createTestQueryClient() {
   });
 }
 
-export function TestProviders({ children }: { children: ReactNode }) {
+function TestProviders({ children }: { children: ReactNode }) {
   const client = createTestQueryClient();
   return (
     <QueryClientProvider client={client}>

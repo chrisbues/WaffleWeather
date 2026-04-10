@@ -3,7 +3,7 @@
 import asyncio
 import logging
 from collections import deque
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 import aiomqtt
 from sqlalchemy.dialects.postgresql import insert as pg_insert

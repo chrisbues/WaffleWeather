@@ -6,7 +6,7 @@ import type { Observation, ObservationPage } from "@/generated/models";
 
 export type TrendDirection = "up" | "down" | "flat" | null;
 
-export interface Trends {
+interface Trends {
   temp_outdoor: TrendDirection;
   humidity_outdoor: TrendDirection;
   pressure_rel: TrendDirection;

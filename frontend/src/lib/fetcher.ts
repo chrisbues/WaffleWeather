@@ -25,5 +25,3 @@ export const customFetch = async <T>(
     headers: response.headers,
   } as T;
 };
-
-export default customFetch;

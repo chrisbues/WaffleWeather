@@ -8,7 +8,6 @@ from pathlib import Path
 import yaml
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.requests import Request
 from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Receive, Scope, Send
 

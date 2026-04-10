@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import type { AggregatedObservation } from "@/generated/models";
 import { useListHourlyObservations } from "@/generated/aggregates/aggregates";
 
-export interface TodayExtremes {
+interface TodayExtremes {
   tempMin: number | null;
   tempMax: number | null;
   humidityMin: number | null;

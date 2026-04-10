@@ -10,7 +10,6 @@ from app.database import get_db
 from app.models.lightning import LightningEvent
 from app.schemas.lightning import (
     LightningEventPageSchema,
-    LightningEventSchema,
     LightningSummarySchema,
 )
 

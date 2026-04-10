@@ -4,12 +4,17 @@ import { renderWithProviders } from "@/test/wrappers";
 import { makeObservation } from "@/test/fixtures";
 import LightningCard from "./LightningCard";
 
-// Mock the generated hook
+// Default mock: summary not loaded
+const mockUseGetLightningSummary = vi.fn(() => ({ data: undefined }));
 vi.mock("@/generated/lightning/lightning", () => ({
-  useGetLightningSummary: () => ({ data: undefined }),
+  useGetLightningSummary: (...args: unknown[]) => mockUseGetLightningSummary(...args),
 }));
 
 describe("LightningCard", () => {
+  beforeEach(() => {
+    mockUseGetLightningSummary.mockReturnValue({ data: undefined });
+  });
+
   it("renders em dash when summary not loaded", () => {
     renderWithProviders(
       <LightningCard data={makeObservation({ lightning_count: 5 })} />,
@@ -58,5 +63,26 @@ describe("LightningCard", () => {
   it("handles null data", () => {
     renderWithProviders(<LightningCard data={null} />);
     expect(screen.getByText("Lightning")).toBeInTheDocument();
+  });
+
+  it("fades distance and last strike when ghost-only", () => {
+    mockUseGetLightningSummary.mockReturnValue({
+      data: { data: { total_strikes: 0, event_count: 0, filtered_count: 5, closest_distance: null, daily: [], hourly: [] } },
+    });
+    renderWithProviders(
+      <LightningCard data={makeObservation({ lightning_distance: 14.0, lightning_time: new Date().toISOString() })} />,
+    );
+    expect(screen.getByText("ghost")).toBeInTheDocument();
+  });
+
+  it("suppresses active pulse when ghost-only", () => {
+    mockUseGetLightningSummary.mockReturnValue({
+      data: { data: { total_strikes: 0, event_count: 0, filtered_count: 5, closest_distance: null, daily: [], hourly: [] } },
+    });
+    const recentTime = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    const { container } = renderWithProviders(
+      <LightningCard data={makeObservation({ lightning_distance: 14.0, lightning_time: recentTime })} />,
+    );
+    expect(container.querySelector(".lightning-active")).not.toBeInTheDocument();
   });
 });

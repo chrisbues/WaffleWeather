@@ -60,6 +60,9 @@ export default function LightningCard({ data }: { data: Observation | null }) {
   const { data: summaryResponse } = useGetLightningSummary(summaryParams);
   const summary = summaryResponse?.data as LightningSummary | undefined;
 
+  // Ghost-only: summary loaded, zero real strikes, but sensor has data
+  const ghostOnly = summary != null && summary.total_strikes === 0 && data?.lightning_distance != null;
+
   // Approach/retreat from hourly distance trend
   const trend = useMemo(() => {
     if (!summary?.hourly || summary.hourly.length < 2) return null;
@@ -77,14 +80,14 @@ export default function LightningCard({ data }: { data: Observation | null }) {
       title="Lightning"
       icon={<RiFlashlightLine className="h-4 w-4" />}
       info={`Electromagnetic detection of lightning within ${system === "metric" ? "~40 km" : "~25 mi"} via the WH57 sensor. Estimates distance but not direction. Card pulses amber when a strike was detected in the last 30 minutes.`}
-      className={active ? "lightning-active" : undefined}
+      className={active && !ghostOnly ? "lightning-active" : undefined}
     >
       <div className="flex items-center gap-1.5">
         <span className="font-mono text-4xl font-semibold tabular-nums text-text">
           {summary?.total_strikes ?? "\u2014"}
         </span>
         <span className="text-lg text-text-faint">in 24h</span>
-        {active && (
+        {active && !ghostOnly && (
           <span className="ml-1 inline-block h-2 w-2 rounded-full bg-warning animate-pulse" />
         )}
       </div>
@@ -96,7 +99,7 @@ export default function LightningCard({ data }: { data: Observation | null }) {
         </div>
       )}
 
-      <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+      <div className={`mt-4 grid grid-cols-2 gap-3 text-sm ${ghostOnly ? "opacity-40" : ""}`}>
         <div>
           <p className="text-xs text-text-faint">Distance</p>
           <p className="font-mono font-medium tabular-nums text-text-muted">
@@ -111,7 +114,10 @@ export default function LightningCard({ data }: { data: Observation | null }) {
         </div>
         <div>
           <p className="text-xs text-text-faint">Last strike</p>
-          <p className="font-medium text-text-muted">{timeAgo(data?.lightning_time)}</p>
+          <p className="font-medium text-text-muted">
+            {timeAgo(data?.lightning_time)}
+            {ghostOnly && <span className="ml-1 text-[10px]">ghost</span>}
+          </p>
         </div>
       </div>
     </WeatherCard>

@@ -114,7 +114,7 @@ class TestParseEcowittPayload:
         _, diag = parse_ecowitt_payload("dev1", sample_ecowitt_payload)
         assert "wh25batt" in diag["batteries"]
         batt = diag["batteries"]["wh25batt"]
-        assert batt["label"] == "Indoor Sensor"
+        assert batt["label"] == "Indoor T/H/Baro Sensor"
         assert batt["type"] == "boolean"
 
     def test_battery_diagnostics_voltage(self, sample_ecowitt_payload):

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useListStations } from "@/generated/stations/stations";
 import { useWebSocket, type Diagnostics, type BatteryInfo } from "@/providers/WebSocketProvider";
 import { fmt, timeAgo } from "@/lib/utils";
@@ -11,6 +12,8 @@ import {
 } from "@remixicon/react";
 import { convertAltitude } from "@/lib/units";
 import { useUnits } from "@/providers/UnitsProvider";
+
+const FRONTEND_VERSION = process.env.NEXT_PUBLIC_FRONTEND_VERSION ?? "unknown";
 
 function StationInfo({ station }: { station: Station }) {
   const { system } = useUnits();
@@ -163,9 +166,21 @@ function DiagnosticsSection({ diagnostics }: { diagnostics: Diagnostics | null }
   );
 }
 
+function useBackendVersion() {
+  const [version, setVersion] = useState<string | null>(null);
+  useEffect(() => {
+    fetch("/api/v1/version")
+      .then((r) => r.json())
+      .then((d) => setVersion(d.backend))
+      .catch(() => setVersion("unavailable"));
+  }, []);
+  return version;
+}
+
 export default function SettingsPage() {
   const { data: stationsResponse } = useListStations();
   const { connected, diagnostics } = useWebSocket();
+  const backendVersion = useBackendVersion();
 
   const stations = (stationsResponse?.data as Station[] | undefined) ?? [];
 
@@ -215,8 +230,12 @@ export default function SettingsPage() {
               <dd className="font-medium">WaffleWeather</dd>
             </div>
             <div>
-              <dt className="text-xs text-text-faint">Version</dt>
-              <dd className="font-mono font-medium">1.0.0</dd>
+              <dt className="text-xs text-text-faint">Frontend</dt>
+              <dd className="font-mono font-medium">{FRONTEND_VERSION}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-text-faint">Backend</dt>
+              <dd className="font-mono font-medium">{backendVersion ?? "..."}</dd>
             </div>
           </dl>
         </div>

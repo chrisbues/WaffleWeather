@@ -36,10 +36,10 @@ class TestAppRoutes:
 
 class TestAppConfig:
     def test_title_and_version(self):
-        from app.main import app
+        from app.main import BACKEND_VERSION, app
 
         assert app.title == "WaffleWeather API"
-        assert app.version == "1.0.0"
+        assert app.version == BACKEND_VERSION
 
     def test_docs_disabled_by_default(self):
         """Default settings have enable_docs=False, so /docs should be None."""

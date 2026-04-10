@@ -91,20 +91,20 @@ FAHRENHEIT_FIELDS = {"bgt", "wbgt"}
 # Battery fields: ecowitt key -> (label, type)
 # Types: "boolean" (OFF=OK, ON=Low), "voltage" (V), "percentage" (%)
 BATTERY_MAP: dict[str, tuple[str, str]] = {
-    "wh25batt": ("Indoor Sensor", "boolean"),
-    "wh26batt": ("Indoor Sensor", "boolean"),
-    "wh65batt": ("Weather Station", "boolean"),
-    "wh68batt": ("Outdoor Sensor", "voltage"),
-    "wh40batt": ("Rain Gauge", "voltage"),
-    "wh80batt": ("Anemometer", "voltage"),
-    "wh90batt": ("Weather Station", "voltage"),
-    "wh57batt": ("Lightning Detector", "percentage"),
-    "bgtbatt": ("Globe Thermometer", "boolean"),
-    "co2_batt": ("CO2 Sensor", "percentage"),
-    **{f"batt{i}": (f"Sensor Ch{i}", "boolean") for i in range(1, 9)},
-    **{f"soilbatt{i}": (f"Soil Sensor Ch{i}", "voltage") for i in range(1, 9)},
-    **{f"pm25batt{i}": (f"PM2.5 Sensor Ch{i}", "percentage") for i in range(1, 5)},
-    **{f"leakbatt{i}": (f"Leak Sensor Ch{i}", "percentage") for i in range(1, 5)},
+    "wh25batt": ("Indoor T/H/Baro Sensor", "boolean"),  # WH25
+    "wh26batt": ("T/H Sensor", "boolean"),  # WH32 / WH26
+    "wh65batt": ("Outdoor Sensor Array", "boolean"),  # WH65 / WS69
+    "wh68batt": ("Solar Anemometer", "voltage"),  # WS68
+    "wh40batt": ("Rain Gauge", "voltage"),  # WH40
+    "wh80batt": ("Ultrasonic Anemometer", "voltage"),  # WS80
+    "wh90batt": ("7-in-1 Sensor Array", "voltage"),  # WS90
+    "wh57batt": ("Lightning Detector", "percentage"),  # WH57
+    "bgtbatt": ("Black Globe Thermometer", "boolean"),  # WN38 / BGT
+    "co2_batt": ("CO2 Sensor", "percentage"),  # WH45
+    **{f"batt{i}": (f"T/H Sensor Ch{i}", "boolean") for i in range(1, 9)},  # WH31
+    **{f"soilbatt{i}": (f"Soil Moisture Sensor Ch{i}", "voltage") for i in range(1, 9)},  # WH51
+    **{f"pm25batt{i}": (f"PM2.5 Air Quality Sensor Ch{i}", "percentage") for i in range(1, 5)},  # WH41/WH43
+    **{f"leakbatt{i}": (f"Leak Sensor Ch{i}", "percentage") for i in range(1, 5)},  # WH55
 }
 
 # Gateway diagnostic fields to pass through

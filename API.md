@@ -132,7 +132,7 @@ The WebSocket broadcasts every observation as it arrives from MQTT. There is no 
   "zambretti_forecast": "Fine, becoming less settled",
   "diagnostics": {
     "batteries": {
-      "wh65batt": { "label": "Weather Station", "type": "boolean", "value": "OK" }
+      "wh65batt": { "label": "Outdoor Sensor Array", "type": "boolean", "value": "OK" }
     },
     "gateway": {
       "runtime": 123456,

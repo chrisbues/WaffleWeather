@@ -34,6 +34,9 @@ def _make_settings(**kwargs):
         "station_latitude": None,
         "station_longitude": None,
         "station_altitude": None,
+        "lightning_filter_enabled": False,
+        "lightning_filter_distances": [],
+        "lightning_filter_max_strikes": 1,
     }
     defaults.update(kwargs)
     settings = MagicMock()
@@ -183,7 +186,7 @@ class TestDetectLightningEvent:
     @patch("app.mqtt.client.async_session")
     async def test_first_observation_sets_baseline(self, mock_async_session):
         parsed = {"station_id": "d1", "timestamp": datetime.now(timezone.utc), "lightning_count": 5}
-        await _detect_lightning_event("d1", parsed)
+        await _detect_lightning_event("d1", parsed, _make_settings())
         assert "d1" in _last_lightning
         assert _last_lightning["d1"][0] == 5
 
@@ -199,7 +202,7 @@ class TestDetectLightningEvent:
             "lightning_count": 8,
             "lightning_distance": 12.0,
         }
-        await _detect_lightning_event("d1", parsed)
+        await _detect_lightning_event("d1", parsed, _make_settings())
         session.add.assert_called_once()
         event = session.add.call_args[0][0]
         assert event.new_strikes == 3
@@ -211,7 +214,7 @@ class TestDetectLightningEvent:
         _last_lightning["d1"] = (50, None)
 
         parsed = {"station_id": "d1", "timestamp": datetime.now(timezone.utc), "lightning_count": 3}
-        await _detect_lightning_event("d1", parsed)
+        await _detect_lightning_event("d1", parsed, _make_settings())
         session.add.assert_called_once()
         event = session.add.call_args[0][0]
         assert event.new_strikes == 3
@@ -222,7 +225,7 @@ class TestDetectLightningEvent:
         _last_lightning["d1"] = (5, lt)
 
         parsed = {"station_id": "d1", "timestamp": datetime.now(timezone.utc), "lightning_count": 5, "lightning_time": lt}
-        await _detect_lightning_event("d1", parsed)
+        await _detect_lightning_event("d1", parsed, _make_settings())
         mock_async_session.assert_not_called()
 
     @patch("app.mqtt.client.async_session")
@@ -237,11 +240,98 @@ class TestDetectLightningEvent:
             "lightning_count": 5,
             "lightning_time": datetime(2026, 4, 5, 12, 0, tzinfo=timezone.utc),
         }
-        await _detect_lightning_event("d1", parsed)
+        await _detect_lightning_event("d1", parsed, _make_settings())
         session.add.assert_called_once()
         event = session.add.call_args[0][0]
         assert event.new_strikes == 1
 
     async def test_no_lightning_count_skips(self):
         parsed = {"station_id": "d1", "timestamp": datetime.now(timezone.utc)}
-        await _detect_lightning_event("d1", parsed)
+        await _detect_lightning_event("d1", parsed, _make_settings())
+
+    @patch("app.mqtt.client.async_session")
+    async def test_ghost_strike_filtered(self, mock_async_session):
+        factory, session = _mock_db_session()
+        mock_async_session.side_effect = factory
+        _last_lightning["d1"] = (5, None)
+
+        parsed = {
+            "station_id": "d1",
+            "timestamp": datetime.now(timezone.utc),
+            "lightning_count": 6,
+            "lightning_distance": 14.0,
+        }
+        settings = _make_settings(lightning_filter_enabled=True, lightning_filter_distances=[12.0, 14.0])
+        await _detect_lightning_event("d1", parsed, settings)
+        session.add.assert_called_once()
+        event = session.add.call_args[0][0]
+        assert event.new_strikes == 1
+        assert event.filtered is True
+
+    @patch("app.mqtt.client.async_session")
+    async def test_multi_strike_bypasses_filter(self, mock_async_session):
+        factory, session = _mock_db_session()
+        mock_async_session.side_effect = factory
+        _last_lightning["d1"] = (5, None)
+
+        parsed = {
+            "station_id": "d1",
+            "timestamp": datetime.now(timezone.utc),
+            "lightning_count": 8,
+            "lightning_distance": 14.0,
+        }
+        settings = _make_settings(lightning_filter_enabled=True, lightning_filter_distances=[12.0, 14.0])
+        await _detect_lightning_event("d1", parsed, settings)
+        session.add.assert_called_once()
+        event = session.add.call_args[0][0]
+        assert event.new_strikes == 3
+        assert event.filtered is False
+
+    @patch("app.mqtt.client.async_session")
+    async def test_unknown_distance_not_filtered(self, mock_async_session):
+        factory, session = _mock_db_session()
+        mock_async_session.side_effect = factory
+        _last_lightning["d1"] = (5, None)
+
+        parsed = {
+            "station_id": "d1",
+            "timestamp": datetime.now(timezone.utc),
+            "lightning_count": 6,
+            "lightning_distance": 8.0,
+        }
+        settings = _make_settings(lightning_filter_enabled=True, lightning_filter_distances=[12.0, 14.0])
+        await _detect_lightning_event("d1", parsed, settings)
+        event = session.add.call_args[0][0]
+        assert event.filtered is False
+
+    @patch("app.mqtt.client.async_session")
+    async def test_filter_disabled(self, mock_async_session):
+        factory, session = _mock_db_session()
+        mock_async_session.side_effect = factory
+        _last_lightning["d1"] = (5, None)
+
+        parsed = {
+            "station_id": "d1",
+            "timestamp": datetime.now(timezone.utc),
+            "lightning_count": 6,
+            "lightning_distance": 14.0,
+        }
+        await _detect_lightning_event("d1", parsed, _make_settings())
+        event = session.add.call_args[0][0]
+        assert event.filtered is False
+
+    @patch("app.mqtt.client.async_session")
+    async def test_null_distance_not_filtered(self, mock_async_session):
+        factory, session = _mock_db_session()
+        mock_async_session.side_effect = factory
+        _last_lightning["d1"] = (5, None)
+
+        parsed = {
+            "station_id": "d1",
+            "timestamp": datetime.now(timezone.utc),
+            "lightning_count": 6,
+        }
+        settings = _make_settings(lightning_filter_enabled=True, lightning_filter_distances=[12.0, 14.0])
+        await _detect_lightning_event("d1", parsed, settings)
+        event = session.add.call_args[0][0]
+        assert event.filtered is False

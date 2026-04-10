@@ -57,6 +57,7 @@ function formatBucket(unix: number, range: TimeRange): string {
 
 export default function LightningPage() {
   const [range, setRange] = useState<TimeRange>("24h");
+  const [showFiltered, setShowFiltered] = useState(false);
   const { data: obsResponse } = useGetLatestObservation();
   const { latestObservation: wsData } = useWebSocket();
   const { data: stationsResponse } = useListStations();
@@ -99,8 +100,8 @@ export default function LightningPage() {
     const end = new Date();
     const ms = range === "24h" ? 24 * 3600000 : range === "7d" ? 7 * 24 * 3600000 : 30 * 24 * 3600000;
     const start = new Date(end.getTime() - ms);
-    return { start: start.toISOString(), end: end.toISOString() };
-  }, [range]);
+    return { start: start.toISOString(), end: end.toISOString(), include_filtered: showFiltered };
+  }, [range, showFiltered]);
   const { data: summaryResponse } = useGetLightningSummary(summaryParams);
   const summary = summaryResponse?.data as LightningSummary | undefined;
 
@@ -109,8 +110,8 @@ export default function LightningPage() {
     const end = new Date();
     const ms = range === "24h" ? 24 * 3600000 : range === "7d" ? 7 * 24 * 3600000 : 30 * 24 * 3600000;
     const start = new Date(end.getTime() - ms);
-    return { start: start.toISOString(), end: end.toISOString(), limit: 50 };
-  }, [range]);
+    return { start: start.toISOString(), end: end.toISOString(), limit: 50, include_filtered: showFiltered };
+  }, [range, showFiltered]);
   const { data: eventsResponse } = useListLightningEvents(eventsParams);
   const events = (eventsResponse?.data as LightningEventPage | undefined)?.items ?? [];
 
@@ -180,7 +181,7 @@ export default function LightningPage() {
           <LightningMap
             latitude={station!.latitude!}
             longitude={station!.longitude!}
-            strikeDistance={data?.lightning_distance ?? null}
+            strikeDistance={summary && summary.total_strikes > 0 ? data?.lightning_distance ?? null : null}
           />
         ) : (
           <div className="flex h-full items-center justify-center text-text-muted">
@@ -237,6 +238,11 @@ export default function LightningPage() {
               Closest: {fmt(convertDistance(summary.closest_distance, system).value)} {distUnit}
             </p>
           )}
+          {summary != null && summary.filtered_count > 0 && !showFiltered && (
+            <p className="mt-0.5 text-xs text-text-faint">
+              {summary.filtered_count} filtered
+            </p>
+          )}
         </div>
       </div>
 
@@ -277,9 +283,21 @@ export default function LightningPage() {
 
       {/* Event timeline */}
       <div className="weather-card rounded-xl p-4">
-        <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-muted">
-          Recent Events
-        </h3>
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-text-muted">
+            Recent Events
+          </h3>
+          <button
+            onClick={() => setShowFiltered(!showFiltered)}
+            className={`text-[11px] px-2 py-0.5 rounded border transition-colors ${
+              showFiltered
+                ? "border-warning/30 text-warning bg-warning/5"
+                : "border-border text-text-faint hover:text-text-muted"
+            }`}
+          >
+            {showFiltered ? "Showing all" : "Filtered hidden"}
+          </button>
+        </div>
         {events.length > 0 ? (
           <div className="max-h-64 space-y-1 overflow-y-auto">
             {events.map((event, i) => {
@@ -287,7 +305,7 @@ export default function LightningPage() {
               return (
                 <div
                   key={i}
-                  className="flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors hover:bg-surface-hover"
+                  className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors hover:bg-surface-hover ${event.filtered ? "opacity-40" : ""}`}
                 >
                   <div className="flex items-center gap-3">
                     <RiFlashlightLine className="h-3.5 w-3.5 text-warning" />
@@ -298,6 +316,9 @@ export default function LightningPage() {
                       <span className="text-text-faint">
                         at {fmt(d.value)} {d.unit}
                       </span>
+                    )}
+                    {event.filtered && (
+                      <span className="text-[10px] text-text-faint">ghost</span>
                     )}
                   </div>
                   <span className="text-xs text-text-faint">

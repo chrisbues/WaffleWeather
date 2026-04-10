@@ -106,7 +106,11 @@ Derived fields (`dewpoint`, `feels_like`, `heat_index`, `wind_chill`, `utci`) ar
 
 **Source:** `lightning_events` table.
 
-The summary endpoint returns: `total_strikes`, `event_count`, `closest_distance`, plus `hourly[]` (strikes per hour, min distance) and `daily[]` (strikes per day) breakdowns.
+Both endpoints accept an `include_filtered` query parameter (default `false`). When false, events flagged as likely false positives (ghost strikes) are excluded from results and aggregations.
+
+The summary endpoint returns: `total_strikes`, `event_count`, `filtered_count`, `closest_distance`, plus `hourly[]` (strikes per hour, min distance) and `daily[]` (strikes per day) breakdowns.
+
+**Ghost strike filtering:** The WH57 sensor (AS3935) is prone to EMI-triggered false positives — isolated single-strike events at fixed distances. When `WW_LIGHTNING_FILTER_ENABLED=true`, the MQTT listener flags events matching the configured distance blocklist (`WW_LIGHTNING_FILTER_DISTANCES`) with `filtered=true`. Events with `new_strikes` exceeding `WW_LIGHTNING_FILTER_MAX_STRIKES` (default 1) bypass the filter, since real storms produce multi-strike bursts. The filter is disabled by default; configure it in `.env` with distances specific to your environment.
 
 ## WebSocket
 

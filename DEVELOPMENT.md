@@ -60,6 +60,11 @@ WW_STATION_NAME=My Weather Station
 WW_STATION_LATITUDE=40.7128
 WW_STATION_LONGITUDE=-74.0060
 WW_STATION_ALTITUDE=10.0
+
+# Lightning false-positive filter (disabled by default)
+WW_LIGHTNING_FILTER_ENABLED=true          # Enable ghost strike filtering
+WW_LIGHTNING_FILTER_DISTANCES=[12.0,14.0] # Distance blocklist in km (JSON array)
+WW_LIGHTNING_FILTER_MAX_STRIKES=1         # Only filter events with this many strikes or fewer
 ```
 
 The frontend uses a single optional env var:

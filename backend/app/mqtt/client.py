@@ -129,7 +129,7 @@ async def _handle_message(
         return
 
     # Detect lightning events by comparing count/time with previous observation
-    await _detect_lightning_event(device_id, parsed)
+    await _detect_lightning_event(device_id, parsed, settings)
 
     if broadcast_fn:
         try:
@@ -173,7 +173,7 @@ async def _handle_message(
             logger.exception("Failed to broadcast observation")
 
 
-async def _detect_lightning_event(device_id: str, parsed: dict) -> None:
+async def _detect_lightning_event(device_id: str, parsed: dict, settings: Settings) -> None:
     """Compare lightning count/time with previous observation and store events."""
     count = parsed.get("lightning_count")
     lt_time = parsed.get("lightning_time")
@@ -205,6 +205,13 @@ async def _detect_lightning_event(device_id: str, parsed: dict) -> None:
     if delta <= 0:
         return
 
+    # Check if this looks like a ghost strike (WH57 false positive)
+    filtered = False
+    if settings.lightning_filter_enabled and delta <= settings.lightning_filter_max_strikes:
+        distance = parsed.get("lightning_distance")
+        if distance is not None and distance in settings.lightning_filter_distances:
+            filtered = True
+
     try:
         async with async_session() as session:
             async with session.begin():
@@ -214,10 +221,12 @@ async def _detect_lightning_event(device_id: str, parsed: dict) -> None:
                     new_strikes=delta,
                     distance_km=parsed.get("lightning_distance"),
                     cumulative_count=count,
+                    filtered=filtered,
                 )
                 session.add(event)
         logger.info(
-            "Lightning event: %d new strikes at %.1f km for %s",
+            "Lightning event%s: %d new strikes at %.1f km for %s",
+            " (filtered)" if filtered else "",
             delta,
             parsed.get("lightning_distance") or 0,
             device_id,

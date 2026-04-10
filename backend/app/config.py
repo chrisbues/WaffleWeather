@@ -13,6 +13,11 @@ class Settings(BaseSettings):
     enable_docs: bool = False  # Set WW_ENABLE_DOCS=true to expose /docs and /openapi.json
     api_key: str | None = None  # Set WW_API_KEY to require authentication on all endpoints
 
+    # Lightning false-positive filter
+    lightning_filter_enabled: bool = False
+    lightning_filter_distances: list[float] = []
+    lightning_filter_max_strikes: int = 1
+
     # Station metadata
     station_name: str | None = None
     station_latitude: float | None = None

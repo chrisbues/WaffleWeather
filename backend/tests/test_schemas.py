@@ -205,8 +205,10 @@ class TestLightningSchemas:
             new_strikes=5,
             distance_km=12.0,
             cumulative_count=50,
+            filtered=False,
         )
         assert e.new_strikes == 5
+        assert e.filtered is False
 
     def test_event_page_schema(self):
         page = LightningEventPageSchema(items=[], total=0, limit=50, offset=0)
@@ -224,9 +226,11 @@ class TestLightningSchemas:
         s = LightningSummarySchema(
             total_strikes=100,
             event_count=5,
+            filtered_count=3,
             closest_distance=3.2,
             daily=[LightningDailySchema(date="2026-04-05", strikes=100)],
             hourly=[],
         )
         assert s.total_strikes == 100
+        assert s.filtered_count == 3
         assert len(s.daily) == 1

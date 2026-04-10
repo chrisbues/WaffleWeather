@@ -26,7 +26,7 @@ A Davis Vantage-inspired all-in-one display with an amber vacuum fluorescent aes
 
 ### Lightning Tracker
 
-Interactive Leaflet map showing your station location and last strike distance radius. Below the map: current sensor stats (count, distance, time since last strike), a strike activity bar chart, and a storm distance line chart showing approach/retreat patterns. Detected events are stored in a separate hypertable so you can browse storm history in the timeline.
+Interactive Leaflet map showing your station location and strike distance rings. Below the map: current sensor stats (count, distance, time since last strike), a strike activity bar chart, and a storm distance line chart showing approach/retreat patterns. Detected events are stored in a separate hypertable so you can browse storm history in the timeline. A configurable ghost strike filter suppresses WH57 false positives — common single-strike events at fixed distances caused by EMI — flagging them rather than dropping them so raw data is preserved.
 
 ![Lightning Tracker](screenshots/lightning.png)
 

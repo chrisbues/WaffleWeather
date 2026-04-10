@@ -81,21 +81,18 @@ export default function LightningCard({ data }: { data: Observation | null }) {
     >
       <div className="flex items-center gap-1.5">
         <span className="font-mono text-4xl font-semibold tabular-nums text-text">
-          {data?.lightning_count ?? "\u2014"}
+          {summary?.total_strikes ?? "\u2014"}
         </span>
-        <span className="text-lg text-text-faint">strikes</span>
+        <span className="text-lg text-text-faint">in 24h</span>
         {active && (
           <span className="ml-1 inline-block h-2 w-2 rounded-full bg-warning animate-pulse" />
         )}
       </div>
 
-      {/* 24h context line */}
+      {/* 24h sparkline */}
       {summary && summary.total_strikes > 0 && (
-        <div className="mt-1.5 flex items-center gap-2">
+        <div className="mt-1.5">
           <Sparkline hourly={summary.hourly} />
-          <span className="text-xs text-text-faint">
-            {summary.total_strikes} in 24h
-          </span>
         </div>
       )}
 

@@ -10,12 +10,12 @@ vi.mock("@/generated/lightning/lightning", () => ({
 }));
 
 describe("LightningCard", () => {
-  it("renders lightning count", () => {
+  it("renders em dash when summary not loaded", () => {
     renderWithProviders(
       <LightningCard data={makeObservation({ lightning_count: 5 })} />,
     );
-    expect(screen.getByText("5")).toBeInTheDocument();
-    expect(screen.getByText("strikes")).toBeInTheDocument();
+    expect(screen.getByText("\u2014")).toBeInTheDocument();
+    expect(screen.getByText("in 24h")).toBeInTheDocument();
   });
 
   it("renders lightning distance", () => {
@@ -25,7 +25,7 @@ describe("LightningCard", () => {
     expect(screen.getByText(/14\.0/)).toBeInTheDocument();
   });
 
-  it("shows em dash for null count", () => {
+  it("shows em dash when summary not loaded and null count", () => {
     renderWithProviders(
       <LightningCard data={makeObservation({ lightning_count: null })} />,
     );

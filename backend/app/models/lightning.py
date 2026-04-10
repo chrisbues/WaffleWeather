@@ -1,4 +1,4 @@
-from sqlalchemy import Column, DateTime, Float, Integer, String
+from sqlalchemy import Boolean, Column, DateTime, Float, Integer, String, text
 
 from app.models.base import Base
 
@@ -11,3 +11,4 @@ class LightningEvent(Base):
     new_strikes = Column(Integer, nullable=False)
     distance_km = Column(Float, nullable=True)
     cumulative_count = Column(Integer, nullable=False)
+    filtered = Column(Boolean, nullable=False, server_default=text("false"))

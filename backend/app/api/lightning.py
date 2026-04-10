@@ -22,6 +22,7 @@ async def list_lightning_events(
     start: datetime | None = Query(None),
     end: datetime | None = Query(None),
     station_id: str | None = Query(None),
+    include_filtered: bool = Query(False),
     limit: int = Query(100, ge=1, le=10000),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
@@ -30,6 +31,9 @@ async def list_lightning_events(
     base = select(LightningEvent)
     count_base = select(func.count()).select_from(LightningEvent)
 
+    if not include_filtered:
+        base = base.where(LightningEvent.filtered == False)  # noqa: E712
+        count_base = count_base.where(LightningEvent.filtered == False)  # noqa: E712
     if station_id:
         base = base.where(LightningEvent.station_id == station_id)
         count_base = count_base.where(LightningEvent.station_id == station_id)
@@ -55,17 +59,31 @@ async def get_lightning_summary(
     start: datetime = Query(...),
     end: datetime = Query(...),
     station_id: str | None = Query(None),
+    include_filtered: bool = Query(False),
     db: AsyncSession = Depends(get_db),
 ):
     """Get lightning activity summary for a time period."""
-    where_clauses = ["timestamp >= :start", "timestamp <= :end"]
+    base_clauses = ["timestamp >= :start", "timestamp <= :end"]
     params: dict = {"start": start, "end": end}
 
     if station_id:
-        where_clauses.append("station_id = :station_id")
+        base_clauses.append("station_id = :station_id")
         params["station_id"] = station_id
 
-    where = " AND ".join(where_clauses)
+    base_where = " AND ".join(base_clauses)
+
+    # Build the main where clause (optionally excluding filtered events)
+    if include_filtered:
+        where = base_where
+    else:
+        where = base_where + " AND filtered = false"
+
+    # Count of filtered events in the period (always uses base_where)
+    filtered_sql = text(
+        f"SELECT COUNT(*) AS cnt FROM lightning_events "
+        f"WHERE {base_where} AND filtered = true"
+    )
+    filtered_count = (await db.execute(filtered_sql, params)).scalar() or 0
 
     # Total strikes and event count
     totals_sql = text(
@@ -106,6 +124,7 @@ async def get_lightning_summary(
     return LightningSummarySchema(
         total_strikes=int(totals["total_strikes"]),
         event_count=int(totals["event_count"]),
+        filtered_count=int(filtered_count),
         closest_distance=float(totals["closest_distance"]) if totals["closest_distance"] is not None else None,
         daily=daily,
         hourly=hourly,

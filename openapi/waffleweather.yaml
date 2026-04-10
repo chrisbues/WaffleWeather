@@ -271,6 +271,13 @@ paths:
           required: false
           schema:
             type: string
+        - name: include_filtered
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: Include events flagged as likely false positives
         - name: limit
           in: query
           required: false
@@ -315,6 +322,13 @@ paths:
           required: false
           schema:
             type: string
+        - name: include_filtered
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: Include events flagged as likely false positives
       responses:
         "200":
           description: Lightning activity summary
@@ -633,7 +647,7 @@ components:
 
     LightningEvent:
       type: object
-      required: [timestamp, station_id, new_strikes, cumulative_count]
+      required: [timestamp, station_id, new_strikes, cumulative_count, filtered]
       properties:
         timestamp:
           type: string
@@ -650,6 +664,9 @@ components:
         cumulative_count:
           type: integer
           description: Raw sensor count at time of detection
+        filtered:
+          type: boolean
+          description: Whether this event was flagged as a likely false positive
 
     LightningEventPage:
       type: object
@@ -691,12 +708,15 @@ components:
 
     LightningSummary:
       type: object
-      required: [total_strikes, event_count, daily, hourly]
+      required: [total_strikes, event_count, filtered_count, daily, hourly]
       properties:
         total_strikes:
           type: integer
         event_count:
           type: integer
+        filtered_count:
+          type: integer
+          description: Number of filtered (likely false positive) events in the period
         closest_distance:
           type: number
           nullable: true

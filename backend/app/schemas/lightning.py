@@ -11,6 +11,7 @@ class LightningEventSchema(BaseModel):
     new_strikes: int
     distance_km: float | None = None
     cumulative_count: int
+    filtered: bool = False
 
     model_config = {"from_attributes": True}
 
@@ -36,6 +37,7 @@ class LightningHourlySchema(BaseModel):
 class LightningSummarySchema(BaseModel):
     total_strikes: int
     event_count: int
+    filtered_count: int = 0
     closest_distance: float | None = None
     daily: list[LightningDailySchema]
     hourly: list[LightningHourlySchema]

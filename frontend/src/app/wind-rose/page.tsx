@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useGetWindRoseData } from "@/generated/aggregates/aggregates";
 import type { WindRoseDataPoint } from "@/generated/models";
@@ -43,12 +43,6 @@ export default function WindRosePage() {
   const { system } = useUnits();
   const [range, setRange] = useState<TimeRange>("7d");
   const [selected, setSelected] = useState<SelectedWedge | null>(null);
-
-  // Reset selection when the time range changes — previous wedge may not exist in the new data.
-  useEffect(() => {
-    setSelected(null);
-  }, [range]);
-
   const selectedKey = selected ? `${selected.direction}|${selected.band}` : null;
   const { start, end } = useMemo(() => getTimeRange(range), [range]);
   const speedUnit = system === "metric" ? "km/h" : "mph";
@@ -66,7 +60,10 @@ export default function WindRosePage() {
           {RANGES.map((r) => (
             <button
               key={r.value}
-              onClick={() => setRange(r.value)}
+              onClick={() => {
+                setRange(r.value);
+                setSelected(null);
+              }}
               className={cn(
                 "flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-all sm:flex-none",
                 range === r.value

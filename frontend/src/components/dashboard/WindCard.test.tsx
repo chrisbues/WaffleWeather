@@ -42,4 +42,20 @@ describe("WindCard", () => {
     renderWithProviders(<WindCard data={null} trend={null} />);
     expect(screen.getByText("Wind")).toBeInTheDocument();
   });
+
+  it("renders wind compass ring with canvas", () => {
+    const { container } = renderWithProviders(
+      <WindCard data={makeObservation()} trend={null} />,
+    );
+    expect(container.querySelector("canvas")).toBeInTheDocument();
+    const lines = container.querySelectorAll("svg line");
+    expect(lines.length).toBe(72);
+  });
+
+  it("does not render wind chill", () => {
+    const { container } = renderWithProviders(
+      <WindCard data={makeObservation()} trend={null} />,
+    );
+    expect(container.textContent).not.toContain("Wind chill");
+  });
 });

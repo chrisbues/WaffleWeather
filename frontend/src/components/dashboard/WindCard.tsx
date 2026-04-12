@@ -4,11 +4,12 @@ import { RiWindyLine } from "@remixicon/react";
 import type { Observation } from "@/generated/models";
 import type { TrendDirection } from "@/hooks/useTrends";
 import { fmt, degToCompass } from "@/lib/utils";
-import { convertSpeed, convertTemp } from "@/lib/units";
+import { convertSpeed } from "@/lib/units";
 import { useUnits } from "@/providers/UnitsProvider";
 import WeatherCard from "./WeatherCard";
 import TrendIndicator from "./TrendIndicator";
 import InfoTip from "@/components/ui/InfoTip";
+import WindCompassRing from "./WindCompassRing";
 
 function beaufort(kmh: number | null | undefined): { force: number; label: string } | null {
   if (kmh == null) return null;
@@ -25,92 +26,10 @@ function beaufort(kmh: number | null | undefined): { force: number; label: strin
   return { force: 12, label: "Hurricane force" };
 }
 
-const cardinals: [number, string][] = [[0, "N"], [90, "E"], [180, "S"], [270, "W"]];
-const intercardinals = [45, 135, 225, 315];
-
-function CompassRose({ degrees }: { degrees: number | null | undefined }) {
-  const hasDeg = degrees != null;
-  return (
-    <svg viewBox="0 0 100 100" className="h-20 w-20 shrink-0">
-      <defs>
-        <radialGradient id="cmp-fill" cx="50%" cy="50%" r="50%">
-          <stop offset="55%" stopColor="var(--color-surface-hover)" stopOpacity="0.35" />
-          <stop offset="100%" stopColor="var(--color-surface-hover)" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-
-      {/* Background disc */}
-      <circle cx="50" cy="50" r="43" fill="url(#cmp-fill)" />
-
-      {/* Outer ring */}
-      <circle cx="50" cy="50" r="43" fill="none" stroke="var(--color-border)" strokeWidth="0.75" />
-
-      {/* Intercardinal ticks */}
-      {intercardinals.map((a) => (
-        <line
-          key={a}
-          x1="50" y1="9" x2="50" y2="15"
-          stroke="var(--color-border)"
-          strokeWidth="0.75"
-          strokeLinecap="round"
-          transform={`rotate(${a} 50 50)`}
-        />
-      ))}
-
-      {/* Cardinal labels (no ticks — the letters are the markers) */}
-      {cardinals.map(([angle, label]) => {
-        const r = 36;
-        const rad = ((angle - 90) * Math.PI) / 180;
-        return (
-          <text
-            key={label}
-            x={50 + r * Math.cos(rad)}
-            y={50 + r * Math.sin(rad)}
-            textAnchor="middle"
-            dominantBaseline="central"
-            className="font-mono"
-            fontSize="7.5"
-            fontWeight={label === "N" ? "700" : "400"}
-            fill={label === "N" ? "var(--color-primary)" : "var(--color-text-faint)"}
-          >
-            {label}
-          </text>
-        );
-      })}
-
-      {/* Needle */}
-      {hasDeg && (
-        <g
-          className="compass-needle"
-          style={{ transform: `rotate(${degrees}deg)`, transformOrigin: "50px 50px" }}
-        >
-          {/* North — warm amber, tapered */}
-          <polygon
-            points="50,17 48.4,47 50,44 51.6,47"
-            fill="var(--color-primary)"
-            opacity="0.9"
-          />
-          {/* South — muted tail */}
-          <polygon
-            points="50,83 48.8,53 50,56 51.2,53"
-            fill="var(--color-text-faint)"
-            opacity="0.25"
-          />
-        </g>
-      )}
-
-      {/* Center cap */}
-      <circle cx="50" cy="50" r="2.5" fill="var(--color-surface-alt)" stroke="var(--color-border)" strokeWidth="0.75" />
-      <circle cx="50" cy="50" r="1.25" fill="var(--color-primary)" />
-    </svg>
-  );
-}
-
 export default function WindCard({ data, trend }: { data: Observation | null; trend: TrendDirection }) {
   const { system } = useUnits();
   const speed = convertSpeed(data?.wind_speed, system);
   const gust = convertSpeed(data?.wind_gust, system);
-  const chill = convertTemp(data?.wind_chill, system);
 
   return (
     <WeatherCard
@@ -118,8 +37,8 @@ export default function WindCard({ data, trend }: { data: Observation | null; tr
       icon={<RiWindyLine className="h-4 w-4" />}
       info="Wind speed and direction from the anemometer. Speed is a 1-minute average; gust is the peak in the current interval."
     >
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex items-center gap-4">
+        <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             <span className="font-mono text-4xl font-semibold tabular-nums text-text">
               {fmt(speed.value)}
@@ -138,19 +57,25 @@ export default function WindCard({ data, trend }: { data: Observation | null; tr
               </p>
             ) : null;
           })()}
+          <div className="mt-2">
+            <p className="text-xs text-text-faint">
+              Gust{" "}
+              <InfoTip
+                text="Highest instantaneous wind speed in the current reporting interval."
+                side="bottom"
+              />
+            </p>
+            <p className="font-mono text-sm font-medium tabular-nums text-text-muted">
+              {fmt(gust.value)} {gust.unit}
+            </p>
+          </div>
         </div>
-        <CompassRose degrees={data?.wind_dir} />
-      </div>
-      <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-        <div>
-          <p className="text-xs text-text-faint">Gust <InfoTip text="Highest instantaneous wind speed in the current reporting interval." side="bottom" /></p>
-          <p className="font-mono font-medium tabular-nums text-text-muted">{fmt(gust.value)} {gust.unit}</p>
-        </div>
-        <div>
-          <p className="text-xs text-text-faint">Wind chill <InfoTip text={`How cold it feels due to wind. Only applies below ${system === "metric" ? "10°C" : "50°F"} with wind present.`} side="bottom" /></p>
-          <p className="font-mono font-medium tabular-nums text-text-muted">
-            {chill.value != null ? `${fmt(chill.value)}\u00B0` : "\u2014"}
-          </p>
+        <div className="h-36 w-36 shrink-0">
+          <WindCompassRing
+            windDir={data?.wind_dir}
+            windSpeed={data?.wind_speed}
+            windGust={data?.wind_gust}
+          />
         </div>
       </div>
     </WeatherCard>

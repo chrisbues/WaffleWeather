@@ -78,4 +78,14 @@ describe("WindRoseChart", () => {
       count: 8,
     });
   });
+
+  it("highlights the wedge matching selectedKey", () => {
+    const { container } = render(
+      <WindRoseChart data={sampleData} selectedKey="0|0-5" />,
+    );
+    const selected = container.querySelector('[data-testid="wind-rose-wedge-0-0-5"]');
+    const unselected = container.querySelector('[data-testid="wind-rose-wedge-90-0-5"]');
+    expect(selected?.getAttribute("stroke-width")).toBe("1.5");
+    expect(unselected?.getAttribute("stroke-width")).toBe("0.5");
+  });
 });

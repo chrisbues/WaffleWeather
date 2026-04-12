@@ -24,9 +24,10 @@ export interface SelectedWedge {
 interface Props {
   data: WindRoseDataPoint[];
   onSelect?: (wedge: SelectedWedge) => void;
+  selectedKey?: string | null;
 }
 
-export default function WindRoseChart({ data, onSelect }: Props) {
+export default function WindRoseChart({ data, onSelect, selectedKey }: Props) {
   const { wedges, maxCount, rings } = useMemo(() => {
     // Build a map: direction → [band counts in order]
     const sectorMap = new Map<number, Map<string, number>>();
@@ -163,15 +164,16 @@ export default function WindRoseChart({ data, onSelect }: Props) {
       {/* Wedges */}
       {wedges.map((w) => {
         const key = `${w.dir}|${w.band}`;
+        const isSelected = key === selectedKey;
         return (
           <path
             key={key}
             data-testid={`wind-rose-wedge-${w.dir}-${w.band}`}
             d={wedgePath(w.dir, w.innerR, w.outerR)}
             fill={w.color}
-            opacity={0.85}
-            stroke="var(--color-surface)"
-            strokeWidth="0.5"
+            opacity={isSelected ? 1 : 0.85}
+            stroke={isSelected ? "var(--color-text)" : "var(--color-surface)"}
+            strokeWidth={isSelected ? "1.5" : "0.5"}
             onMouseEnter={() => onSelect?.({ direction: w.dir, band: w.band, count: w.count })}
             onClick={() => onSelect?.({ direction: w.dir, band: w.band, count: w.count })}
           />

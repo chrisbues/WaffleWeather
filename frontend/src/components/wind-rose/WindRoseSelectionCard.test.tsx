@@ -43,4 +43,11 @@ describe("WindRoseSelectionCard", () => {
     await act(async () => {});
     expect(screen.getByText("3–9 mph")).toBeInTheDocument();
   });
+
+  it("renders an InfoTip trigger in the header", () => {
+    renderWithProviders(
+      <WindRoseSelectionCard selection={null} totalObs={0} />,
+    );
+    expect(screen.getByLabelText("More info")).toBeInTheDocument();
+  });
 });

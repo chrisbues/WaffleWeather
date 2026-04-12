@@ -1,5 +1,6 @@
 "use client";
 
+import InfoTip from "@/components/ui/InfoTip";
 import { useUnits } from "@/providers/UnitsProvider";
 import type { SelectedWedge } from "./WindRoseChart";
 
@@ -51,8 +52,11 @@ export default function WindRoseSelectionCard({ selection, totalObs }: Props) {
 
   return (
     <div className="weather-card rounded-xl p-5">
-      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-muted">
+      <h3 className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-text-muted">
         Selection
+        <InfoTip
+          text="Shows details about the wind rose segment you're hovering or tapping. Direction is the compass heading the wind blows from; the speed band matches the legend colors (swatch shown). Frequency is this segment's share of all observations in the selected time range."
+        />
       </h3>
       {selection === null ? (
         <p className="text-sm text-text-faint">

@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useGetWindRoseData } from "@/generated/aggregates/aggregates";
 import type { WindRoseDataPoint } from "@/generated/models";
-import WindRoseChart from "@/components/wind-rose/WindRoseChart";
+import WindRoseChart, { type SelectedWedge } from "@/components/wind-rose/WindRoseChart";
+import WindRoseSelectionCard from "@/components/wind-rose/WindRoseSelectionCard";
 import InfoTip from "@/components/ui/InfoTip";
 import { useUnits } from "@/providers/UnitsProvider";
 
@@ -41,6 +42,14 @@ function getTimeRange(range: TimeRange): { start: string; end: string } {
 export default function WindRosePage() {
   const { system } = useUnits();
   const [range, setRange] = useState<TimeRange>("7d");
+  const [selected, setSelected] = useState<SelectedWedge | null>(null);
+
+  // Reset selection when the time range changes — previous wedge may not exist in the new data.
+  useEffect(() => {
+    setSelected(null);
+  }, [range]);
+
+  const selectedKey = selected ? `${selected.direction}|${selected.band}` : null;
   const { start, end } = useMemo(() => getTimeRange(range), [range]);
   const speedUnit = system === "metric" ? "km/h" : "mph";
 
@@ -83,13 +92,18 @@ export default function WindRosePage() {
               No wind data for this period
             </div>
           ) : (
-            <WindRoseChart data={data} />
+            <WindRoseChart
+              data={data}
+              onSelect={setSelected}
+              selectedKey={selectedKey}
+            />
           )}
         </div>
 
-        {/* Legend + stats */}
-        <div className="space-y-4">
-          <div className="weather-card rounded-xl p-5">
+        {/* Legend + stats + selection */}
+        <div className="flex flex-col gap-4">
+          {/* Legend */}
+          <div className="weather-card order-2 rounded-xl p-5 lg:order-1">
             <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-muted">
               Speed Bands
             </h3>
@@ -108,7 +122,8 @@ export default function WindRosePage() {
             </div>
           </div>
 
-          <div className="weather-card rounded-xl p-5">
+          {/* Statistics */}
+          <div className="weather-card order-3 rounded-xl p-5 lg:order-2">
             <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-muted">
               Statistics
             </h3>
@@ -124,6 +139,12 @@ export default function WindRosePage() {
                 </span>
               </div>
             </div>
+          </div>
+
+          {/* Selection — order-1 on mobile (appears first in the sidebar stack, which
+              itself sits directly under the chart) and order-3 on desktop (below Stats) */}
+          <div className="order-1 lg:order-3">
+            <WindRoseSelectionCard selection={selected} totalObs={totalObs} />
           </div>
         </div>
       </div>

@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { render } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import { render, fireEvent } from "@testing-library/react";
 import WindRoseChart from "./WindRoseChart";
 import type { WindRoseDataPoint } from "@/generated/models";
 
@@ -46,5 +46,21 @@ describe("WindRoseChart", () => {
     const circles = container.querySelectorAll("circle");
     // 4 concentric rings + 1 center dot = 5
     expect(circles.length).toBe(5);
+  });
+
+  it("fires onSelect with wedge payload on mouse enter", () => {
+    const onSelect = vi.fn();
+    const { container } = render(
+      <WindRoseChart data={sampleData} onSelect={onSelect} />,
+    );
+    const wedge = container.querySelector('[data-testid="wind-rose-wedge-0-0-5"]');
+    expect(wedge).not.toBeNull();
+    fireEvent.mouseEnter(wedge!);
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onSelect).toHaveBeenCalledWith({
+      direction: 0,
+      band: "0-5",
+      count: 10,
+    });
   });
 });

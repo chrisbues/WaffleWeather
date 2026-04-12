@@ -15,11 +15,18 @@ const BAND_COLORS = [
 ];
 const DIRECTION_LABELS = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
 
-interface Props {
-  data: WindRoseDataPoint[];
+export interface SelectedWedge {
+  direction: number;
+  band: string;
+  count: number;
 }
 
-export default function WindRoseChart({ data }: Props) {
+interface Props {
+  data: WindRoseDataPoint[];
+  onSelect?: (wedge: SelectedWedge) => void;
+}
+
+export default function WindRoseChart({ data, onSelect }: Props) {
   const { wedges, maxCount, rings } = useMemo(() => {
     // Build a map: direction → [band counts in order]
     const sectorMap = new Map<number, Map<string, number>>();
@@ -50,6 +57,7 @@ export default function WindRoseChart({ data }: Props) {
     const wedges: {
       dir: number;
       band: string;
+      count: number;
       innerR: number;
       outerR: number;
       color: string;
@@ -68,6 +76,7 @@ export default function WindRoseChart({ data }: Props) {
         wedges.push({
           dir,
           band: SPEED_BANDS[bi],
+          count,
           innerR,
           outerR,
           color: BAND_COLORS[bi],
@@ -152,16 +161,21 @@ export default function WindRoseChart({ data }: Props) {
       })}
 
       {/* Wedges */}
-      {wedges.map((w, i) => (
-        <path
-          key={i}
-          d={wedgePath(w.dir, w.innerR, w.outerR)}
-          fill={w.color}
-          opacity={0.85}
-          stroke="var(--color-surface)"
-          strokeWidth="0.5"
-        />
-      ))}
+      {wedges.map((w) => {
+        const key = `${w.dir}|${w.band}`;
+        return (
+          <path
+            key={key}
+            data-testid={`wind-rose-wedge-${w.dir}-${w.band}`}
+            d={wedgePath(w.dir, w.innerR, w.outerR)}
+            fill={w.color}
+            opacity={0.85}
+            stroke="var(--color-surface)"
+            strokeWidth="0.5"
+            onMouseEnter={() => onSelect?.({ direction: w.dir, band: w.band, count: w.count })}
+          />
+        );
+      })}
 
       {/* Direction labels */}
       {DIRECTION_LABELS.map((label, i) => {

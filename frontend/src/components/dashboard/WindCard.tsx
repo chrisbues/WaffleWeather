@@ -70,7 +70,7 @@ export default function WindCard({ data, trend }: { data: Observation | null; tr
             </p>
           </div>
         </div>
-        <div className="h-36 w-36 shrink-0">
+        <div className="h-24 w-24 shrink-0">
           <WindCompassRing
             windDir={data?.wind_dir}
             windSpeed={data?.wind_speed}

@@ -99,6 +99,25 @@
   animation: trend-float 2s ease-in-out infinite;
 }
 
+/* ── Sun glow pulse ──────────────────────────────────────────── */
+
+@keyframes sun-glow-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(var(--glow-scale-max, 1)); opacity: var(--glow-opacity-min, 1); }
+}
+
+.sun-glow-pulse {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: sun-glow-pulse 2.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sun-glow-pulse {
+    animation: none;
+  }
+}
+
 /* ── Lightning active pulse ──────────────────────────────────── */
 
 @keyframes lightning-pulse {

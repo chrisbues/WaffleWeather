@@ -4,21 +4,37 @@ import { useMemo } from "react";
 import SunCalc from "suncalc";
 import { RiSunLine } from "@remixicon/react";
 import { useListStations } from "@/generated/stations/stations";
-import type { Station } from "@/generated/models";
+import type { Station, Observation } from "@/generated/models";
+import type { TrendDirection } from "@/hooks/useTrends";
+import { cn, fmt } from "@/lib/utils";
 import WeatherCard from "./WeatherCard";
+import TrendIndicator from "./TrendIndicator";
 import InfoTip from "@/components/ui/InfoTip";
 
 function fmtTime(d: Date): string {
   return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
 }
 
-export default function SunCard() {
+function uvLevel(uv: number | null | undefined): { label: string; className: string } {
+  if (uv == null) return { label: "\u2014", className: "text-text-muted" };
+  if (uv < 3) return { label: "Low", className: "text-success" };
+  if (uv < 6) return { label: "Moderate", className: "text-warning" };
+  if (uv < 8) return { label: "High", className: "text-warning" };
+  if (uv < 11) return { label: "Very High", className: "text-danger" };
+  return { label: "Extreme", className: "text-danger" };
+}
+
+function glowRadius(solar: number | null | undefined): number {
+  const s = Math.min(Math.max(solar ?? 0, 0), 1000);
+  return 6 + Math.sqrt(s / 1000) * 18;
+}
+
+export default function SunCard({ data, solarTrend, uvTrend }: { data: Observation | null; solarTrend: TrendDirection; uvTrend: TrendDirection }) {
   const { data: stationsResponse } = useListStations();
   const stations = stationsResponse?.data as Station[] | undefined;
   const station = stations?.[0];
   const hasLocation = station?.latitude != null && station?.longitude != null;
 
-  // Re-compute every minute
   const minuteKey = Math.floor(Date.now() / 60000);
 
   const sunData = useMemo(() => {
@@ -35,14 +51,12 @@ export default function SunCard() {
 
     const { sunrise, sunset, solarNoon, goldenHour } = times;
 
-    // Day length
     const dayLengthMs = sunset.getTime() - sunrise.getTime();
     const dayLengthMinutes = Math.floor(dayLengthMs / 60000);
     const dayH = Math.floor(dayLengthMinutes / 60);
     const dayM = dayLengthMinutes % 60;
     const dayLengthStr = `${dayH}h ${dayM}m`;
 
-    // Yesterday's day length & delta
     const yesterdayDayLengthMs =
       yesterdayTimes.sunset.getTime() - yesterdayTimes.sunrise.getTime();
     const deltaSec = Math.round((dayLengthMs - yesterdayDayLengthMs) / 1000);
@@ -53,18 +67,15 @@ export default function SunCard() {
     const deltaStr = `${sign}${deltaMin}m ${deltaSRemaining}s`;
     const gaining = deltaSec >= 0;
 
-    // Altitude in degrees (current)
     const currentAltDeg = (position.altitude * 180) / Math.PI;
     const altitudeDeg = Math.round(currentAltDeg);
 
-    // Sun fraction along the arc
     const totalMs = sunset.getTime() - sunrise.getTime();
     const elapsedMs = now.getTime() - sunrise.getTime();
     const rawFraction = totalMs > 0 ? elapsedMs / totalMs : 0;
     const fraction = Math.max(0, Math.min(1, rawFraction));
     const isNight = rawFraction < 0 || rawFraction > 1;
 
-    // Arc geometry: 0° → horizon (y=65), 90° → top of card (y=-8).
     const ARC_X0 = 20;
     const ARC_WIDTH = 160;
     const HORIZON_Y = 65;
@@ -73,7 +84,6 @@ export default function SunCard() {
     const altToY = (deg: number) =>
       HORIZON_Y - Math.max(0, deg / 90) * ALT_SPAN;
 
-    // Sample the real astronomical altitude curve from sunrise to sunset.
     const NUM_SAMPLES = 61;
     const coords: string[] = [];
     for (let i = 0; i < NUM_SAMPLES; i++) {
@@ -87,29 +97,24 @@ export default function SunCard() {
     }
     const arcPath = "M " + coords.join(" L ");
 
-    // Current sun position from the real altitude
     const sunX = ARC_X0 + fraction * ARC_WIDTH;
     const sunY = altToY(currentAltDeg);
 
     return {
-      sunrise,
-      sunset,
-      solarNoon,
-      goldenHour,
-      dayLengthStr,
-      deltaStr,
-      gaining,
-      altitudeDeg,
-      arcPath,
-      sunX,
-      sunY,
-      isNight,
+      sunrise, sunset, solarNoon, goldenHour,
+      dayLengthStr, deltaStr, gaining, altitudeDeg,
+      arcPath, sunX, sunY, isNight,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasLocation, station?.latitude, station?.longitude, minuteKey]);
 
+  const solar = data?.solar_radiation ?? 0;
+  const glow = glowRadius(solar);
+  const amp = Math.min(solar, 1000) / 1000 * 0.08;
+  const uv = uvLevel(data?.uv_index);
+
   return (
-    <WeatherCard title="Sun" icon={<RiSunLine className="h-4 w-4" />} info="Sunrise, sunset, and sun position calculated from your station's coordinates using astronomical algorithms. The arc is the real altitude curve for today — steep near sunrise/sunset and flatter near solar noon, because the sun's vertical motion slows as it approaches its peak. Updates every minute.">
+    <WeatherCard title="Solar" icon={<RiSunLine className="h-4 w-4" />} info="Solar radiation, UV index, and sun position. The arc traces the real altitude curve from astronomical algorithms. The sun's glow scales with measured irradiance — brighter outside means a bigger, more active glow. Updates every minute.">
       {!hasLocation || !sunData ? (
         <p className="text-sm text-text-muted">
           Station location not configured. Set latitude and longitude to see sun
@@ -117,7 +122,6 @@ export default function SunCard() {
         </p>
       ) : (
         <>
-          {/* Sun Arc SVG */}
           <svg
             viewBox="0 -8 200 88"
             className="w-full"
@@ -125,48 +129,28 @@ export default function SunCard() {
           >
             <defs>
               <radialGradient id="sun-glow">
-                <stop
-                  offset="0%"
-                  stopColor="var(--color-primary)"
-                  stopOpacity="0.3"
-                />
-                <stop
-                  offset="100%"
-                  stopColor="var(--color-primary)"
-                  stopOpacity="0"
-                />
+                <stop offset="0%" stopColor="var(--color-primary)" stopOpacity="0.3" />
+                <stop offset="100%" stopColor="var(--color-primary)" stopOpacity="0" />
               </radialGradient>
             </defs>
 
-            {/* Horizon line */}
-            <line
-              x1="10"
-              y1="65"
-              x2="190"
-              y2="65"
-              stroke="var(--color-border)"
-              strokeWidth="0.5"
-            />
+            <line x1="10" y1="65" x2="190" y2="65" stroke="var(--color-border)" strokeWidth="0.5" />
 
-            {/* Arc path — real astronomical altitude curve for today */}
-            <path
-              d={sunData.arcPath}
-              stroke="var(--color-border)"
-              strokeWidth="1"
-              fill="none"
-              strokeDasharray="4 3"
-            />
+            <path d={sunData.arcPath} stroke="var(--color-border)" strokeWidth="1" fill="none" strokeDasharray="4 3" />
 
-            {/* Sun glow */}
             <circle
+              data-testid="sun-glow"
               cx={sunData.sunX}
               cy={sunData.sunY}
-              r="12"
+              r={glow}
               fill="url(#sun-glow)"
-              opacity={sunData.isNight ? 0.15 : 1}
+              className="sun-glow-pulse"
+              style={{
+                "--glow-scale-max": 1 + amp,
+                "--glow-opacity-min": 1 - amp * 0.5,
+              } as React.CSSProperties}
             />
 
-            {/* Sun dot */}
             <circle
               cx={sunData.sunX}
               cy={sunData.sunY}
@@ -175,38 +159,36 @@ export default function SunCard() {
               opacity={sunData.isNight ? 0.3 : 1}
             />
 
-            {/* Sunrise label */}
-            <text
-              x="20"
-              y="78"
-              fontSize="8"
-              fill="var(--color-text-faint)"
-              textAnchor="middle"
-            >
+            <text x="20" y="78" fontSize="8" fill="var(--color-text-faint)" textAnchor="middle">
               {fmtTime(sunData.sunrise)}
             </text>
-
-            {/* Sunset label */}
-            <text
-              x="180"
-              y="78"
-              fontSize="8"
-              fill="var(--color-text-faint)"
-              textAnchor="middle"
-            >
+            <text x="180" y="78" fontSize="8" fill="var(--color-text-faint)" textAnchor="middle">
               {fmtTime(sunData.sunset)}
             </text>
           </svg>
 
-          {/* Stats grid */}
-          <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+          <div className="mt-3 grid grid-cols-3 gap-3 text-sm">
+            <div>
+              <p className="text-xs text-text-faint">Solar Radiation</p>
+              <div className="flex items-center gap-1">
+                <p className="font-mono font-medium tabular-nums text-text-muted">{fmt(data?.solar_radiation, 0)}</p>
+                <span className="text-xs text-text-faint">W/m&sup2;</span>
+                <TrendIndicator trend={solarTrend} className="h-4 w-4" />
+              </div>
+            </div>
+            <div>
+              <p className="text-xs text-text-faint">UV Index <InfoTip text="WHO scale for ultraviolet radiation. 1–2 Low, 3–5 Moderate, 6–7 High, 8–10 Very High, 11+ Extreme. Sun protection needed at 3+." side="bottom" /></p>
+              <div className="flex items-center gap-1">
+                <p className="font-mono font-medium tabular-nums text-text-muted">{fmt(data?.uv_index, 1)}</p>
+                <TrendIndicator trend={uvTrend} className="h-4 w-4" />
+              </div>
+              <p className={cn("text-xs font-medium", uv.className)}>{uv.label}</p>
+            </div>
             <div>
               <p className="text-xs text-text-faint">Day length</p>
               <p className="font-mono font-medium tabular-nums text-text-muted">
                 {sunData.dayLengthStr}{" "}
-                <span
-                  className={`text-xs ${sunData.gaining ? "text-primary" : "text-text-faint"}`}
-                >
+                <span className={`text-xs ${sunData.gaining ? "text-primary" : "text-text-faint"}`}>
                   ({sunData.deltaStr})
                 </span>
               </p>

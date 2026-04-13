@@ -32,6 +32,22 @@ describe("HumidityCard", () => {
     expect(screen.getByText("Very humid")).toBeInTheDocument();
   });
 
+  it("renders VPD when present", () => {
+    renderWithProviders(
+      <HumidityCard data={makeObservation({ vpd: 12 })} trend={null} />,
+    );
+    expect(screen.getByText("VPD")).toBeInTheDocument();
+    expect(screen.getByText("1.20")).toBeInTheDocument();
+    expect(screen.getByText("kPa")).toBeInTheDocument();
+  });
+
+  it("does not render VPD when absent", () => {
+    renderWithProviders(
+      <HumidityCard data={makeObservation({ vpd: null })} trend={null} />,
+    );
+    expect(screen.queryByText("VPD")).not.toBeInTheDocument();
+  });
+
   it("handles null data", () => {
     renderWithProviders(<HumidityCard data={null} trend={null} />);
     expect(screen.getByText("Humidity")).toBeInTheDocument();

@@ -6,6 +6,7 @@ import type { TrendDirection } from "@/hooks/useTrends";
 import { fmt } from "@/lib/utils";
 import WeatherCard from "./WeatherCard";
 import TrendIndicator from "./TrendIndicator";
+import InfoTip from "@/components/ui/InfoTip";
 
 function comfortLevel(humidity: number | null | undefined): string {
   if (humidity == null) return "\u2014";
@@ -39,9 +40,17 @@ export default function HumidityCard({ data, trend, dayMin, dayMax }: { data: Ob
       <p className="mt-1 text-sm text-text-muted">
         {comfortLevel(data?.humidity_outdoor)}
       </p>
-      <div className="mt-3 text-sm">
-        <p className="text-xs text-text-faint">Indoor</p>
-        <p className="font-mono font-medium tabular-nums text-text-muted">{fmt(data?.humidity_indoor, 0)}%</p>
+      <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+        <div>
+          <p className="text-xs text-text-faint">Indoor</p>
+          <p className="font-mono font-medium tabular-nums text-text-muted">{fmt(data?.humidity_indoor, 0)}%</p>
+        </div>
+        {data?.vpd != null && (
+          <div>
+            <p className="text-xs text-text-faint">VPD <InfoTip text="Vapor Pressure Deficit — the difference between how much moisture the air holds and how much it could hold. Higher values mean drier air and faster plant transpiration." side="bottom" /></p>
+            <p className="font-mono font-medium tabular-nums text-text-muted">{fmt(data.vpd / 10, 2)} <span className="text-text-faint">kPa</span></p>
+          </div>
+        )}
       </div>
     </WeatherCard>
   );

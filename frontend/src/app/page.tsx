@@ -11,7 +11,6 @@ import HumidityCard from "@/components/dashboard/HumidityCard";
 import WindCard from "@/components/dashboard/WindCard";
 import PressureCard from "@/components/dashboard/PressureCard";
 import RainCard from "@/components/dashboard/RainCard";
-import SolarUVCard from "@/components/dashboard/SolarUVCard";
 import LightningCard from "@/components/dashboard/LightningCard";
 import UTCICard from "@/components/dashboard/UTCICard";
 import SunCard from "@/components/dashboard/SunCard";
@@ -23,16 +22,13 @@ export default function DashboardPage() {
   const trends = useTrends();
   const extremes = useTodayExtremes();
 
-  // Orval wraps response as { data: Observation, status, headers }
   const apiData = apiResponse?.data as Observation | undefined;
-  // Merge WS over REST so REST-only fields (e.g. zambretti_forecast) persist
   const data: Observation | null = wsData
     ? ({ ...apiData, ...wsData } as Observation)
     : apiData ?? null;
 
   return (
     <div className="p-4 sm:p-6">
-      {/* Header */}
       <div className="page-header mb-6 flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl font-semibold text-text">Observatory</h1>
@@ -46,18 +42,16 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Card Grid */}
-      <div className="card-stagger grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="card-stagger grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <TemperatureCard data={data} trend={trends.temp_outdoor} dayMin={extremes.tempMin} dayMax={extremes.tempMax} />
         <HumidityCard data={data} trend={trends.humidity_outdoor} dayMin={extremes.humidityMin} dayMax={extremes.humidityMax} />
-        <WindCard data={data} trend={trends.wind_speed} />
         <PressureCard data={data} trend={trends.pressure_rel} />
-        <RainCard data={data} trend={trends.rain_rate} />
-        <SolarUVCard data={data} solarTrend={trends.solar_radiation} uvTrend={trends.uv_index} />
-        <LightningCard data={data} />
         <UTCICard data={data} />
-        <SunCard />
+        <RainCard data={data} trend={trends.rain_rate} />
+        <WindCard data={data} trend={trends.wind_speed} />
+        <SunCard data={data} solarTrend={trends.solar_radiation} uvTrend={trends.uv_index} />
         <MoonCard />
+        <LightningCard data={data} />
       </div>
     </div>
   );

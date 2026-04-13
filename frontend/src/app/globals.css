@@ -296,12 +296,6 @@ body::after {
   background: linear-gradient(to top, color-mix(in srgb, var(--color-surface-alt) 50%, transparent), transparent);
 }
 
-/* ── Compass rose ───────────────────────────────────────────── */
-
-.compass-needle {
-  transition: transform 0.7s cubic-bezier(0.4, 2, 0.55, 1);
-}
-
 /* ── uPlot cursor / selection overrides ──────────────────────── */
 
 .u-cursor-x,

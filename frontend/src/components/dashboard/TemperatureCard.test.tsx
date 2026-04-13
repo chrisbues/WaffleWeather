@@ -39,10 +39,31 @@ describe("TemperatureCard", () => {
     expect(screen.getByText("Miserable")).toBeInTheDocument();
   });
 
+  it("does not render Feels Like", () => {
+    renderWithProviders(
+      <TemperatureCard data={makeObservation()} trend={null} />,
+    );
+    expect(screen.queryByText(/Feels like/)).not.toBeInTheDocument();
+  });
+
+  it("does not render Globe or Wet Bulb", () => {
+    renderWithProviders(
+      <TemperatureCard data={makeObservation({ bgt: 25.0, wbgt: 22.0 })} trend={null} />,
+    );
+    expect(screen.queryByText("Globe")).not.toBeInTheDocument();
+    expect(screen.queryByText("Wet Bulb")).not.toBeInTheDocument();
+  });
+
+  it("does not render VPD", () => {
+    renderWithProviders(
+      <TemperatureCard data={makeObservation({ vpd: 12 })} trend={null} />,
+    );
+    expect(screen.queryByText("VPD")).not.toBeInTheDocument();
+  });
+
   it("handles null data gracefully", () => {
     renderWithProviders(<TemperatureCard data={null} trend={null} />);
     expect(screen.getByText("Temperature")).toBeInTheDocument();
-    // Should show em dashes
     expect(screen.getAllByText("\u2014").length).toBeGreaterThan(0);
   });
 

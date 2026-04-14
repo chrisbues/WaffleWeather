@@ -8,6 +8,10 @@ Named after a very good dog.
   <img src="screenshots/observatory-dark.png" alt="WaffleWeather Observatory (dark)" width="48%" />
   <img src="screenshots/observatory-light.png" alt="WaffleWeather Observatory (light)" width="48%" />
 </p>
+<p align="center">
+  <img src="screenshots/observatory-mobile-dark.png" alt="WaffleWeather Observatory mobile (dark)" width="24%" />
+  <img src="screenshots/observatory-mobile-light.png" alt="WaffleWeather Observatory mobile (light)" width="24%" />
+</p>
 
 ## Why?
 

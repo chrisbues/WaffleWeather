@@ -1,4 +1,6 @@
-import { memo, useMemo } from "react";
+"use client";
+
+import { memo, useId, useMemo } from "react";
 
 interface SparklineProps {
   data: (number | null)[];
@@ -66,6 +68,7 @@ function monotoneCubicPath(
 }
 
 function Sparkline({ data, color, label, height = 32 }: SparklineProps) {
+  const gradientId = useId();
   const pathData = useMemo(() => {
     const valid = data
       .map((v, i) => (v != null ? { index: i, value: v } : null))
@@ -89,7 +92,7 @@ function Sparkline({ data, color, label, height = 32 }: SparklineProps) {
       `L${points[points.length - 1].x},${height}` +
       `L${points[0].x},${height}Z`;
 
-    return { line, area, id: `sparkline-grad-${Math.random().toString(36).slice(2, 8)}` };
+    return { line, area };
   }, [data, height]);
 
   if (!pathData) return null;
@@ -103,12 +106,12 @@ function Sparkline({ data, color, label, height = 32 }: SparklineProps) {
       aria-label={label}
     >
       <defs>
-        <linearGradient id={pathData.id} x1="0" x2="0" y1="0" y2="1">
+        <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
           <stop offset="0%" stopColor={color} stopOpacity={0.25} />
           <stop offset="100%" stopColor={color} stopOpacity={0} />
         </linearGradient>
       </defs>
-      <path d={pathData.area} fill={`url(#${pathData.id})`} />
+      <path d={pathData.area} fill={`url(#${gradientId})`} />
       <path
         d={pathData.line}
         fill="none"

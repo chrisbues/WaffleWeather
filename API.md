@@ -35,7 +35,7 @@ Ecowitt Station → ecowitt2mqtt → Mosquitto (MQTT)
 
 **Aggregated columns** (all three views share the same schema):
 
-`temp_outdoor_avg`, `temp_outdoor_min`, `temp_outdoor_max`, `humidity_outdoor_avg`, `humidity_outdoor_min`, `humidity_outdoor_max`, `pressure_rel_avg`, `wind_speed_avg`, `wind_gust_max`, `rain_daily_max`, `solar_radiation_avg`, `uv_index_max`
+`temp_outdoor_avg`, `temp_outdoor_min`, `temp_outdoor_max`, `dewpoint_avg`, `dewpoint_min`, `dewpoint_max`, `humidity_outdoor_avg`, `humidity_outdoor_min`, `humidity_outdoor_max`, `pressure_rel_avg`, `wind_speed_avg`, `wind_gust_max`, `rain_daily_max`, `solar_radiation_avg`, `uv_index_max`
 
 ## REST Endpoints
 

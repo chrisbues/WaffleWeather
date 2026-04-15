@@ -116,6 +116,9 @@ class AggregatedObservationSchema(BaseModel):
     temp_outdoor_avg: float | None = None
     temp_outdoor_min: float | None = None
     temp_outdoor_max: float | None = None
+    dewpoint_avg: float | None = None
+    dewpoint_min: float | None = None
+    dewpoint_max: float | None = None
     humidity_outdoor_avg: float | None = None
     humidity_outdoor_min: float | None = None
     humidity_outdoor_max: float | None = None

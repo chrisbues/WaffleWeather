@@ -22,6 +22,7 @@ _VALID_VIEWS = {"observations_hourly", "observations_daily", "observations_month
 _AGG_COLUMNS = (
     "station_id, bucket, "
     "temp_outdoor_avg, temp_outdoor_min, temp_outdoor_max, "
+    "dewpoint_avg, dewpoint_min, dewpoint_max, "
     "humidity_outdoor_avg, humidity_outdoor_min, humidity_outdoor_max, "
     "pressure_rel_avg, "
     "wind_speed_avg, wind_gust_max, "

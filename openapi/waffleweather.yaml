@@ -585,6 +585,16 @@ components:
         temp_outdoor_max:
           type: number
           nullable: true
+        # Dewpoint
+        dewpoint_avg:
+          type: number
+          nullable: true
+        dewpoint_min:
+          type: number
+          nullable: true
+        dewpoint_max:
+          type: number
+          nullable: true
         # Humidity
         humidity_outdoor_avg:
           type: number

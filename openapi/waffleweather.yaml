@@ -370,6 +370,130 @@ paths:
                 items:
                   $ref: "#/components/schemas/WindRoseDataPoint"
 
+  /api/v1/reports/monthly:
+    get:
+      summary: Monthly climate report (NOAA-style)
+      operationId: getMonthlyReport
+      tags: [reports]
+      parameters:
+        - name: year
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: month
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: station_id
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Monthly climate report with daily rows
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClimateReport"
+        "404":
+          description: Station not found
+
+  /api/v1/reports/yearly:
+    get:
+      summary: Yearly climate report (NOAA-style)
+      operationId: getYearlyReport
+      tags: [reports]
+      parameters:
+        - name: year
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: station_id
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Yearly climate report with monthly rows
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClimateReport"
+        "404":
+          description: Station not found
+
+  /api/v1/reports/monthly/txt:
+    get:
+      summary: Monthly climate report as plain text (NOAA format)
+      operationId: getMonthlyReportTxt
+      tags: [reports]
+      parameters:
+        - name: year
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: month
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: units
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [metric, imperial]
+            default: metric
+        - name: station_id
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Plain-text NOAA-style report
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /api/v1/reports/yearly/txt:
+    get:
+      summary: Yearly climate report as plain text (NOAA format)
+      operationId: getYearlyReportTxt
+      tags: [reports]
+      parameters:
+        - name: year
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: units
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [metric, imperial]
+            default: metric
+        - name: station_id
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Plain-text NOAA-style report
+          content:
+            text/plain:
+              schema:
+                type: string
+
 components:
   schemas:
     Station:
@@ -755,3 +879,139 @@ components:
           type: integer
         offset:
           type: integer
+
+    StationInfo:
+      type: object
+      properties:
+        name:
+          type: string
+          nullable: true
+        latitude:
+          type: number
+          nullable: true
+        longitude:
+          type: number
+          nullable: true
+        altitude:
+          type: number
+          nullable: true
+
+    ReportPeriod:
+      type: object
+      required: [type, year]
+      properties:
+        type:
+          type: string
+          description: "monthly or yearly"
+        year:
+          type: integer
+        month:
+          type: integer
+          nullable: true
+
+    ReportRow:
+      type: object
+      properties:
+        day:
+          type: integer
+          nullable: true
+        month:
+          type: integer
+          nullable: true
+        temp_avg:
+          type: number
+          nullable: true
+        temp_max:
+          type: number
+          nullable: true
+        temp_min:
+          type: number
+          nullable: true
+        dewpoint_avg:
+          type: number
+          nullable: true
+        dewpoint_max:
+          type: number
+          nullable: true
+        dewpoint_min:
+          type: number
+          nullable: true
+        humidity_avg:
+          type: number
+          nullable: true
+        pressure_avg:
+          type: number
+          nullable: true
+        wind_speed_avg:
+          type: number
+          nullable: true
+        wind_gust_max:
+          type: number
+          nullable: true
+        wind_dir_prevailing:
+          type: string
+          nullable: true
+        rain_total:
+          type: number
+          nullable: true
+        hdd:
+          type: number
+          nullable: true
+        cdd:
+          type: number
+          nullable: true
+
+    ReportSummary:
+      type: object
+      properties:
+        temp_avg:
+          type: number
+          nullable: true
+        temp_max:
+          type: number
+          nullable: true
+        temp_max_date:
+          type: string
+          nullable: true
+        temp_min:
+          type: number
+          nullable: true
+        temp_min_date:
+          type: string
+          nullable: true
+        rain_total:
+          type: number
+          nullable: true
+        rain_days:
+          type: integer
+          nullable: true
+        wind_gust_max:
+          type: number
+          nullable: true
+        wind_gust_max_date:
+          type: string
+          nullable: true
+        wind_dir_prevailing:
+          type: string
+          nullable: true
+        hdd_total:
+          type: number
+          nullable: true
+        cdd_total:
+          type: number
+          nullable: true
+
+    ClimateReport:
+      type: object
+      required: [station, period, rows, summary]
+      properties:
+        station:
+          $ref: "#/components/schemas/StationInfo"
+        period:
+          $ref: "#/components/schemas/ReportPeriod"
+        rows:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReportRow"
+        summary:
+          $ref: "#/components/schemas/ReportSummary"

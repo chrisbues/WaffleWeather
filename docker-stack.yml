@@ -1,0 +1,97 @@
+# Docker Swarm stack for WaffleWeather
+#
+# Build images first (from project root):
+#   docker build -f backend/Dockerfile -t waffleweather-backend:latest .
+#   docker build -f frontend/Dockerfile -t waffleweather-frontend:latest \
+#     --build-arg NEXT_PUBLIC_WS_URL=ws://<your-host>:8000/ws/live .
+#
+# Deploy to Swarm:
+#   docker swarm init  # if not already a swarm
+#   docker stack deploy -c docker-stack.yml waffleweather
+#
+# Remove stack:
+#   docker stack rm waffleweather
+
+services:
+  backend:
+    image: waffleweather-backend:latest
+    environment:
+      WW_DATABASE_URL: postgresql+asyncpg://waffleweather:changeme@postgres:5432/waffleweather
+      WW_MQTT_BROKER: mosquitto
+      WW_MQTT_PORT: "1883"
+      WW_MQTT_TOPIC: Gateway
+      WW_MQTT_USERNAME: waffleweather
+      WW_MQTT_PASSWORD: changeme
+      WW_CORS_ORIGINS: '["http://localhost:3000"]'
+      WW_ENABLE_DOCS: "false"
+      # WW_API_KEY: your-secret-key
+      # WW_STATION_NAME: My Weather Station
+      # WW_STATION_LATITUDE: "40.7128"
+      # WW_STATION_LONGITUDE: "-74.0060"
+      # WW_STATION_ALTITUDE: "10.0"
+    networks:
+      - waffleweather
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 5
+
+  frontend:
+    image: waffleweather-frontend:latest
+    environment:
+      # Server-side only: the internal service name used for API/WS rewrites
+      BACKEND_URL: http://backend:8000
+    ports:
+      - "3000:3000"
+    networks:
+      - waffleweather
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+  postgres:
+    image: timescale/timescaledb:latest-pg17
+    environment:
+      POSTGRES_USER: waffleweather
+      POSTGRES_PASSWORD: changeme
+      POSTGRES_DB: waffleweather
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - waffleweather
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    configs:
+      - source: mosquitto_config
+        target: /mosquitto/config/mosquitto.conf
+    ports:
+      - "1883:1883"
+      - "8080:8080"
+      - "9001:9001"
+    volumes:
+      - mosquitto_data:/mosquitto/data
+    networks:
+      - waffleweather
+    deploy:
+      replicas: 1
+
+configs:
+  mosquitto_config:
+    file: ./deploy/mosquitto.conf
+
+networks:
+  waffleweather:
+    driver: overlay
+
+volumes:
+  postgres_data:
+  mosquitto_data:

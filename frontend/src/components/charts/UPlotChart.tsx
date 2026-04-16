@@ -132,10 +132,13 @@ export default function UPlotChart({
   // making `data` a dependency of `createChart`. Data updates flow through
   // the dedicated `setData` effect below, avoiding destroy/recreate on every
   // WebSocket tick.
+  //
+  // Assign during render (not in useEffect) so a newly-mounted uPlot instance
+  // sees the CURRENT render's data rather than the previous one. React
+  // officially supports ref mutation during render for this cache-latest-value
+  // pattern; the assignment is idempotent across re-renders.
   const dataRef = useRef(data);
-  useEffect(() => {
-    dataRef.current = data;
-  }, [data]);
+  dataRef.current = data;
 
   const createChart = useCallback(() => {
     const el = containerRef.current;

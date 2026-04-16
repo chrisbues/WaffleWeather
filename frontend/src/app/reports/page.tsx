@@ -5,6 +5,7 @@ import { RiArrowLeftSLine, RiArrowRightSLine, RiDownloadLine } from "@remixicon/
 import { cn } from "@/lib/utils";
 import { ApiError } from "@/lib/fetcher";
 import { convertAltitude } from "@/lib/units";
+import { CADENCES } from "@/lib/queryCadences";
 import { useUnits } from "@/providers/UnitsProvider";
 import { useGetMonthlyReport, useGetYearlyReport } from "@/generated/reports/reports";
 import ReportTable from "@/components/reports/ReportTable";
@@ -30,11 +31,11 @@ export default function ReportsPage() {
   // period ends, so no polling — rely on manual navigation + mode changes.
   const monthlyQuery = useGetMonthlyReport(
     { year, month },
-    { query: { enabled: mode === "monthly", refetchInterval: undefined } },
+    { query: { enabled: mode === "monthly", refetchInterval: CADENCES.none } },
   );
   const yearlyQuery = useGetYearlyReport(
     { year },
-    { query: { enabled: mode === "yearly", refetchInterval: undefined } },
+    { query: { enabled: mode === "yearly", refetchInterval: CADENCES.none } },
   );
 
   const activeQuery = mode === "monthly" ? monthlyQuery : yearlyQuery;

@@ -54,7 +54,7 @@ export default function HumidityCard({ data, trend, dayMin, dayMax, sparkline }:
         )}
       </div>
       {sparkline && sparkline.length >= 2 && (
-        <div className="mt-3">
+        <div className="mt-auto pt-3">
           <Sparkline
             data={sparkline}
             color="var(--color-success)"

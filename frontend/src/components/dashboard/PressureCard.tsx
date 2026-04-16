@@ -43,7 +43,7 @@ export default function PressureCard({ data, trend, sparkline }: { data: Observa
         )}
       </div>
       {sparkline && sparkline.length >= 2 && (
-        <div className="mt-3">
+        <div className="mt-auto pt-3">
           <Sparkline
             data={sparkline}
             color="var(--color-primary)"

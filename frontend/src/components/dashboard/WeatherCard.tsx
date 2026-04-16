@@ -22,7 +22,7 @@ export default function WeatherCard({
   return (
     <div
       className={cn(
-        "weather-card rounded-xl p-5 shadow-sm",
+        "weather-card flex flex-col rounded-xl p-5 shadow-sm",
         className,
       )}
     >

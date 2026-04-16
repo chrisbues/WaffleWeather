@@ -61,7 +61,7 @@ export default function TemperatureCard({ data, trend, dayMin, dayMax, sparkline
         </div>
       </div>
       {sparkline && sparkline.length >= 2 && (
-        <div className="mt-3">
+        <div className="mt-auto pt-3">
           <Sparkline
             data={sparkline}
             color="var(--color-danger)"

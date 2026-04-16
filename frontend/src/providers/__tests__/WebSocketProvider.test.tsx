@@ -1,6 +1,9 @@
 import { render, act } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import WebSocketProvider, { MAX_RETRIES } from "../WebSocketProvider";
+import WebSocketProvider, {
+  MAX_RETRIES,
+  useWebSocket,
+} from "../WebSocketProvider";
 
 /**
  * Minimal controllable WebSocket double.
@@ -143,5 +146,60 @@ describe("WebSocketProvider", () => {
     });
 
     expect(FakeWS.instances.length).toBeGreaterThan(instancesAfterOpen);
+  });
+
+  it("exposes offline status after MAX_RETRIES", () => {
+    // Captures the most recent context value so the test can assert against
+    // the consumer-visible state (offline, reconnect) rather than relying on
+    // implementation-internal counters.
+    let captured: ReturnType<typeof useWebSocket> | null = null;
+    function Probe() {
+      captured = useWebSocket();
+      return null;
+    }
+
+    render(
+      <WebSocketProvider>
+        <Probe />
+      </WebSocketProvider>,
+    );
+
+    // Before the cap is hit, offline should be false even while disconnected.
+    expect(captured?.offline).toBe(false);
+
+    // Drive MAX_RETRIES consecutive failures. Each close schedules a
+    // reconnect; advancing past max backoff + jitter fires it and constructs
+    // a new FakeWS.
+    for (let i = 0; i < MAX_RETRIES; i++) {
+      act(() => {
+        FakeWS.latest?.triggerClose();
+        vi.advanceTimersByTime(60_000);
+      });
+    }
+
+    // One more close should flip offline true and NOT schedule another
+    // reconnect.
+    const instancesAtCap = FakeWS.instances.length;
+    act(() => {
+      FakeWS.latest?.triggerClose();
+      vi.advanceTimersByTime(60_000);
+    });
+
+    expect(captured?.offline).toBe(true);
+    expect(captured?.connected).toBe(false);
+    expect(FakeWS.instances.length).toBe(instancesAtCap);
+
+    // Manual reconnect should construct a new socket and clear offline once
+    // it opens.
+    act(() => {
+      captured?.reconnect();
+    });
+    expect(FakeWS.instances.length).toBe(instancesAtCap + 1);
+
+    act(() => {
+      FakeWS.latest?.triggerOpen();
+    });
+    expect(captured?.offline).toBe(false);
+    expect(captured?.connected).toBe(true);
   });
 });

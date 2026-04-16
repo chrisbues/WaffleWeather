@@ -63,13 +63,17 @@ NOAA-style monthly and yearly climate summaries with daily breakdown tables show
 
 ![Climate Reports](screenshots/reports.png)
 
+### Diagnostics
+
+Battery levels, gateway stats, firmware info, and connection status. Useful for keeping an eye on sensor health.
+
+![Diagnostics](screenshots/diagnostics.png)
+
 ### Install as an App
 
 WaffleWeather is a Progressive Web App — add it to your phone's home screen for a native app experience. On iOS, tap Share → "Add to Home Screen". On Android, tap the install prompt in Chrome. You get standalone mode (no browser chrome), a waffle icon, and app shortcuts for quick access to the Observatory, Console, Lightning, and History pages. If the Pi is unreachable, an offline fallback page tells you so instead of a browser error.
 
 ### Additional Features
-
-**Diagnostics** — Battery levels, gateway stats, firmware info, and connection status. Useful for keeping an eye on sensor health.
 
 **Unit Toggle** — Global metric/imperial switch in the sidebar that converts everything on the fly. All data is stored as metric; conversions happen in the browser with precision tuned to sensor resolution.
 

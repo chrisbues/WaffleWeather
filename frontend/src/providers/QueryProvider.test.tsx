@@ -11,6 +11,9 @@ function TestConsumer() {
     <div>
       <span data-testid="staleTime">{String(defaults.queries?.staleTime)}</span>
       <span data-testid="retry">{String(defaults.queries?.retry)}</span>
+      <span data-testid="refetchInterval">
+        {String(defaults.queries?.refetchInterval)}
+      </span>
     </div>
   );
 }
@@ -32,5 +35,14 @@ describe("QueryProvider", () => {
       </QueryProvider>,
     );
     expect(screen.getByTestId("retry").textContent).toBe("2");
+  });
+
+  it("does not set a global refetchInterval (each hook owns its cadence)", () => {
+    render(
+      <QueryProvider>
+        <TestConsumer />
+      </QueryProvider>,
+    );
+    expect(screen.getByTestId("refetchInterval").textContent).toBe("undefined");
   });
 });

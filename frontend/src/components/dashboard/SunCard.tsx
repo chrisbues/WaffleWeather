@@ -30,7 +30,9 @@ function glowRadius(solar: number | null | undefined): number {
 }
 
 export default function SunCard({ data, solarTrend, uvTrend }: { data: Observation | null; solarTrend: TrendDirection; uvTrend: TrendDirection }) {
-  const { data: stationsResponse } = useListStations();
+  const { data: stationsResponse } = useListStations({
+    query: { refetchInterval: Infinity },
+  });
   const stations = stationsResponse?.data as Station[] | undefined;
   const station = stations?.[0];
   const hasLocation = station?.latitude != null && station?.longitude != null;

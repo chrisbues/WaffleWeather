@@ -17,7 +17,11 @@ export function useTodayExtremes(): TodayExtremes {
     return { start: start.toISOString(), end: now.toISOString() };
   }, []);
 
-  const { data: response } = useListHourlyObservations(params);
+  // Today's hourly extremes — rolls forward once per hour. 5-minute poll keeps
+  // the min/max bars reasonably fresh without the 60s churn.
+  const { data: response } = useListHourlyObservations(params, {
+    query: { refetchInterval: 5 * 60 * 1000 },
+  });
   const rows = (response?.data ?? []) as AggregatedObservation[];
 
   return useMemo(() => {

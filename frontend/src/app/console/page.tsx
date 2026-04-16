@@ -61,11 +61,15 @@ const DARK_VARS: React.CSSProperties = {
 
 export default function ConsolePage() {
   // ── Data fetching ─────────────────────────────────────────────
-  const { data: apiResponse } = useGetLatestObservation();
+  const { data: apiResponse } = useGetLatestObservation(undefined, {
+    query: { refetchInterval: 30_000 },
+  });
   const { latestObservation: wsData } = useWebSocket();
   const trends = useTrends();
   const { system } = useUnits();
-  const { data: stationsResponse } = useListStations();
+  const { data: stationsResponse } = useListStations({
+    query: { refetchInterval: Infinity },
+  });
 
   const apiData = apiResponse?.data as Observation | undefined;
   const data: Observation | null = wsData

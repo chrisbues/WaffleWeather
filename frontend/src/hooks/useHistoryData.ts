@@ -40,24 +40,27 @@ function getTimeRange(range: TimeRange): { start: string; end: string } {
 export function useHistoryData(range: TimeRange) {
   const { start, end } = useMemo(() => getTimeRange(range), [range]);
 
+  // History charts are a long-lived aggregate view — no background polling.
+  // Unit toggle + range change invalidate via params; WebSocket delivers live
+  // 24h updates separately.
   const rawQuery = useListObservations(
     { start, end, limit: 10000 },
-    { query: { enabled: range === "24h" } },
+    { query: { enabled: range === "24h", refetchInterval: undefined } },
   );
 
   const hourlyQuery = useListHourlyObservations(
     { start, end },
-    { query: { enabled: range === "7d" } },
+    { query: { enabled: range === "7d", refetchInterval: undefined } },
   );
 
   const dailyQuery = useListDailyObservations(
     { start, end },
-    { query: { enabled: range === "30d" } },
+    { query: { enabled: range === "30d", refetchInterval: undefined } },
   );
 
   const monthlyQuery = useListMonthlyObservations(
     { start, end },
-    { query: { enabled: range === "1y" } },
+    { query: { enabled: range === "1y", refetchInterval: undefined } },
   );
 
   if (range === "24h") {

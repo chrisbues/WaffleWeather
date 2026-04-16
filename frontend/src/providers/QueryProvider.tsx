@@ -10,7 +10,9 @@ export default function QueryProvider({ children }: { children: ReactNode }) {
         defaultOptions: {
           queries: {
             staleTime: 30_000,
-            refetchInterval: 60_000,
+            // Do not set a global `refetchInterval` here — each hook must specify
+            // its own cadence so static/aggregate endpoints (reports, calendar,
+            // history, wind rose) don't generate background request churn.
             retry: 2,
           },
         },

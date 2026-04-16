@@ -57,7 +57,9 @@ export default function LightningCard({ data }: { data: Observation | null }) {
     const start = new Date(end.getTime() - 24 * 60 * 60 * 1000);
     return { start: start.toISOString(), end: end.toISOString() };
   }, []);
-  const { data: summaryResponse } = useGetLightningSummary(summaryParams);
+  const { data: summaryResponse } = useGetLightningSummary(summaryParams, {
+    query: { refetchInterval: 60_000 },
+  });
   const summary = summaryResponse?.data as LightningSummary | undefined;
 
   // Ghost-only: summary loaded, zero real strikes, but sensor has data

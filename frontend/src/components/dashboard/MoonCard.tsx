@@ -90,7 +90,9 @@ function MoonPhaseSVG({ phase }: { phase: number }) {
 }
 
 export default function MoonCard() {
-  const { data: stationsResponse } = useListStations();
+  const { data: stationsResponse } = useListStations({
+    query: { refetchInterval: Infinity },
+  });
   const stations = stationsResponse?.data as Station[] | undefined;
   const station = stations?.[0];
 

@@ -25,14 +25,15 @@ export default function ReportsPage() {
   const [mode, setMode] = useState<Mode>("monthly");
   const { system } = useUnits();
 
-  // Fetch data based on mode
+  // Fetch data based on mode. Reports are historical and don't change after the
+  // period ends, so no polling — rely on manual navigation + mode changes.
   const monthlyQuery = useGetMonthlyReport(
     { year, month },
-    { query: { enabled: mode === "monthly" } },
+    { query: { enabled: mode === "monthly", refetchInterval: undefined } },
   );
   const yearlyQuery = useGetYearlyReport(
     { year },
-    { query: { enabled: mode === "yearly" } },
+    { query: { enabled: mode === "yearly", refetchInterval: undefined } },
   );
 
   const activeQuery = mode === "monthly" ? monthlyQuery : yearlyQuery;

@@ -178,7 +178,11 @@ function useBackendVersion() {
 }
 
 export default function SettingsPage() {
-  const { data: stationsResponse } = useListStations();
+  // Station metadata (model, firmware, location) effectively never changes at
+  // runtime; live diagnostics (battery, gateway) arrive via WebSocket, not HTTP.
+  const { data: stationsResponse } = useListStations({
+    query: { refetchInterval: Infinity },
+  });
   const { connected, diagnostics } = useWebSocket();
   const backendVersion = useBackendVersion();
 

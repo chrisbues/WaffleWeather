@@ -47,7 +47,12 @@ export default function WindRosePage() {
   const { start, end } = useMemo(() => getTimeRange(range), [range]);
   const speedUnit = system === "metric" ? "km/h" : "mph";
 
-  const { data: response, isLoading } = useGetWindRoseData({ start, end });
+  // Wind rose aggregates over 24h+ windows — no polling needed; re-fetches on
+  // range change via the new params.
+  const { data: response, isLoading } = useGetWindRoseData(
+    { start, end },
+    { query: { refetchInterval: undefined } },
+  );
   const data = (response?.data as WindRoseDataPoint[] | undefined) ?? [];
 
   const totalObs = data.reduce((sum, d) => sum + d.count, 0);

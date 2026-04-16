@@ -18,7 +18,9 @@ import SunCard from "@/components/dashboard/SunCard";
 import MoonCard from "@/components/dashboard/MoonCard";
 
 export default function DashboardPage() {
-  const { data: apiResponse, error } = useGetLatestObservation();
+  const { data: apiResponse, error } = useGetLatestObservation(undefined, {
+    query: { refetchInterval: 30_000 },
+  });
   const { latestObservation: wsData } = useWebSocket();
   const trends = useTrends();
   const extremes = useTodayExtremes();

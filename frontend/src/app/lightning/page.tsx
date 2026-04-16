@@ -58,9 +58,13 @@ function formatBucket(unix: number, range: TimeRange): string {
 export default function LightningPage() {
   const [range, setRange] = useState<TimeRange>("24h");
   const [showFiltered, setShowFiltered] = useState(false);
-  const { data: obsResponse } = useGetLatestObservation();
+  const { data: obsResponse } = useGetLatestObservation(undefined, {
+    query: { refetchInterval: 30_000 },
+  });
   const { latestObservation: wsData } = useWebSocket();
-  const { data: stationsResponse } = useListStations();
+  const { data: stationsResponse } = useListStations({
+    query: { refetchInterval: Infinity },
+  });
   const { system } = useUnits();
 
   const apiData = obsResponse?.data as Observation | undefined;
@@ -102,7 +106,9 @@ export default function LightningPage() {
     const start = new Date(end.getTime() - ms);
     return { start: start.toISOString(), end: end.toISOString(), include_filtered: showFiltered };
   }, [range, showFiltered]);
-  const { data: summaryResponse } = useGetLightningSummary(summaryParams);
+  const { data: summaryResponse } = useGetLightningSummary(summaryParams, {
+    query: { refetchInterval: 60_000 },
+  });
   const summary = summaryResponse?.data as LightningSummary | undefined;
 
   // Recent events for the timeline
@@ -112,7 +118,9 @@ export default function LightningPage() {
     const start = new Date(end.getTime() - ms);
     return { start: start.toISOString(), end: end.toISOString(), limit: 50, include_filtered: showFiltered };
   }, [range, showFiltered]);
-  const { data: eventsResponse } = useListLightningEvents(eventsParams);
+  const { data: eventsResponse } = useListLightningEvents(eventsParams, {
+    query: { refetchInterval: 60_000 },
+  });
   const events = (eventsResponse?.data as LightningEventPage | undefined)?.items ?? [];
 
   // Chart data from summary

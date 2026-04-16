@@ -253,7 +253,12 @@ export default function CalendarHeatmap() {
   const [metric, setMetric] = useState<GetCalendarDataMetric>(GetCalendarDataMetric.temp_outdoor_max);
   const year = new Date().getFullYear();
 
-  const { data: response, isLoading } = useGetCalendarData({ metric, year });
+  // 365-day calendar heatmap + daily aggregates are a static annual view.
+  // Re-runs naturally on metric/year/unit changes — no background polling.
+  const { data: response, isLoading } = useGetCalendarData(
+    { metric, year },
+    { query: { refetchInterval: undefined } },
+  );
   const rawData = (response?.data as CalendarDataPoint[] | undefined) ?? [];
 
   // Fetch daily aggregates for tooltip detail (temp & humidity min/avg/max)
@@ -261,7 +266,9 @@ export default function CalendarHeatmap() {
     start: `${year}-01-01T00:00:00Z`,
     end: `${year}-12-31T23:59:59Z`,
   }), [year]);
-  const { data: dailyResponse } = useListDailyObservations(dailyParams);
+  const { data: dailyResponse } = useListDailyObservations(dailyParams, {
+    query: { refetchInterval: undefined },
+  });
   const dailyRows = (dailyResponse?.data ?? []) as AggregatedObservation[];
 
   // Convert daily aggregates to correct unit system and index by date

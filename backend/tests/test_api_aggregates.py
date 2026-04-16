@@ -1,6 +1,6 @@
 """Tests for app/api/aggregates.py endpoints."""
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, MagicMock
 
 
@@ -169,3 +169,45 @@ class TestWindRoseEndpoint:
         )
         assert resp.status_code == 200
         assert resp.json() == []
+
+
+class TestSpanValidation:
+    """Verify each aggregate endpoint rejects time ranges exceeding its granularity cap."""
+
+    async def test_hourly_range_exceeding_14d_returns_400(self, test_client):
+        end = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        start = end - timedelta(days=15)  # 15d > 14d cap
+        resp = await test_client.get(
+            "/api/v1/observations/hourly",
+            params={"start": start.isoformat(), "end": end.isoformat()},
+        )
+        assert resp.status_code == 400
+        body = resp.text.lower()
+        assert "14" in body or "hourly" in body
+
+    async def test_daily_range_exceeding_1y_returns_400(self, test_client):
+        end = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        start = end - timedelta(days=400)  # > 366d cap
+        resp = await test_client.get(
+            "/api/v1/observations/daily",
+            params={"start": start.isoformat(), "end": end.isoformat()},
+        )
+        assert resp.status_code == 400
+
+    async def test_monthly_range_exceeding_10y_returns_400(self, test_client):
+        end = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        start = end - timedelta(days=365 * 11)  # > 3660d cap
+        resp = await test_client.get(
+            "/api/v1/observations/monthly",
+            params={"start": start.isoformat(), "end": end.isoformat()},
+        )
+        assert resp.status_code == 400
+
+    async def test_wind_rose_range_exceeding_1y_returns_400(self, test_client):
+        end = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        start = end - timedelta(days=400)  # > 366d cap
+        resp = await test_client.get(
+            "/api/v1/observations/wind-rose",
+            params={"start": start.isoformat(), "end": end.isoformat()},
+        )
+        assert resp.status_code == 400

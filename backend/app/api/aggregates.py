@@ -1,6 +1,6 @@
 """Aggregate observation API endpoints (hourly, daily, monthly, calendar)."""
 
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import text
@@ -17,6 +17,38 @@ router = APIRouter(prefix="/observations", tags=["aggregates"])
 
 # Allowlist of valid view names for aggregate queries (prevents SQL injection)
 _VALID_VIEWS = {"observations_hourly", "observations_daily", "observations_monthly"}
+
+# Max span per granularity. Prevents DoS from unbounded aggregate queries
+# (e.g. start=1970 with hourly granularity forcing the broker to compute over
+# billions of rows). Limits chosen to cover realistic UI use cases with headroom.
+_MAX_SPANS: dict[str, timedelta] = {
+    "hourly": timedelta(days=14),
+    "daily": timedelta(days=366),
+    "monthly": timedelta(days=366 * 10),
+    "wind-rose": timedelta(days=366),
+}
+
+
+def _validate_span(granularity: str, start: datetime, end: datetime) -> None:
+    """Raise 400 if ``end - start`` exceeds the cap for ``granularity``.
+
+    Unknown granularities are accepted (no cap). Also no-ops for end <= start;
+    let downstream logic return an empty result rather than conflating with
+    this validation path.
+    """
+    cap = _MAX_SPANS.get(granularity)
+    if cap is None:
+        return
+    span = end - start
+    if span > cap:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Requested range ({span}) exceeds max for granularity "
+                f"'{granularity}' ({cap}). Narrow the range or use a coarser "
+                f"granularity."
+            ),
+        )
 
 # Column list shared across all aggregate views
 _AGG_COLUMNS = (
@@ -62,6 +94,7 @@ async def list_hourly_observations(
     station_id: str | None = Query(None),
     db: AsyncSession = Depends(get_db),
 ):
+    _validate_span("hourly", start, end)
     return await _query_aggregate("observations_hourly", station_id, start, end, db)
 
 
@@ -72,6 +105,7 @@ async def list_daily_observations(
     station_id: str | None = Query(None),
     db: AsyncSession = Depends(get_db),
 ):
+    _validate_span("daily", start, end)
     return await _query_aggregate("observations_daily", station_id, start, end, db)
 
 
@@ -82,6 +116,7 @@ async def list_monthly_observations(
     station_id: str | None = Query(None),
     db: AsyncSession = Depends(get_db),
 ):
+    _validate_span("monthly", start, end)
     return await _query_aggregate("observations_monthly", station_id, start, end, db)
 
 
@@ -160,6 +195,7 @@ async def get_wind_rose_data(
     station_id: str | None = Query(None),
     db: AsyncSession = Depends(get_db),
 ):
+    _validate_span("wind-rose", start, end)
     where_clauses = [
         "timestamp >= :start",
         "timestamp <= :end",

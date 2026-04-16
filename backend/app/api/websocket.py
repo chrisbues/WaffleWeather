@@ -18,8 +18,6 @@ async def websocket_live(websocket: WebSocket):
     # omit the header anyway.
     origin = websocket.headers.get("origin")
     allowed = settings.cors_origins or []
-    if isinstance(allowed, str):
-        allowed = [o.strip() for o in allowed.split(",") if o.strip()]
     if origin is not None and allowed and origin not in allowed:
         await websocket.close(code=4403)
         return

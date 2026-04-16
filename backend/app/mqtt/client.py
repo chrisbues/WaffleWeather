@@ -20,8 +20,10 @@ from app.services.derived import dew_point, enrich_observation, zambretti_foreca
 logger = logging.getLogger(__name__)
 
 # In-memory pressure history for Zambretti forecast (WebSocket path).
-# Stores (timestamp, pressure_hpa) tuples; pruned to 4h window on each insert.
-_pressure_history: deque[tuple[datetime, float]] = deque(maxlen=1000)
+# Keyed by station_id so multiple stations don't interleave readings.
+# Each per-station deque stores (timestamp, pressure_hpa) tuples; pruned to
+# a 4h window on each insert and capped at maxlen=1000 entries.
+_pressure_history: dict[str, deque[tuple[datetime, float]]] = {}
 
 # In-memory lightning state for event detection.
 # Maps station_id -> (last_count, last_lightning_time)
@@ -191,16 +193,17 @@ async def _handle_message(
                 ts_dt = datetime.fromisoformat(ts)
             else:
                 ts_dt = ts
-            _pressure_history.append((ts_dt, pressure))
+            history = _pressure_history.setdefault(device_id, deque(maxlen=1000))
+            history.append((ts_dt, pressure))
             # Prune entries older than 4 hours
             cutoff = ts_dt - timedelta(hours=4)
-            while _pressure_history and _pressure_history[0][0] < cutoff:
-                _pressure_history.popleft()
+            while history and history[0][0] < cutoff:
+                history.popleft()
             # Find closest reading to 3h ago
             target = ts_dt - timedelta(hours=3)
             best = None
             best_delta = timedelta(minutes=20)  # max tolerance
-            for h_ts, h_p in _pressure_history:
+            for h_ts, h_p in history:
                 d = abs(h_ts - target)
                 if d < best_delta:
                     best_delta = d

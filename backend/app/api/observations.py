@@ -33,17 +33,15 @@ async def get_latest_observation(
     schema = ObservationSchema.model_validate(obs)
 
     # Zambretti forecast: read from in-process cache populated by the MQTT
-    # listener. Falls back to a DB lookup on cold start (empty cache — process
-    # just started and no MQTT messages have arrived yet) or if the cache
-    # entry is missing for this station.
+    # listener. Use `in` membership (not truthiness) to distinguish:
+    #   - cache miss (key absent): cold start / this station unseen → DB fallback
+    #   - cached None (key present, value None): MQTT processed an observation
+    #     but had <3h of pressure history → authoritative "no forecast". Running
+    #     the abs(epoch) DB query would also return None, just slower.
     if schema.pressure_rel is not None:
         forecast_cache = getattr(request.app.state, "latest_forecast", None)
-        cached = None
-        if forecast_cache is not None:
-            cached = forecast_cache.get(obs.station_id)
-
-        if cached is not None:
-            schema.zambretti_forecast = cached
+        if forecast_cache is not None and obs.station_id in forecast_cache:
+            schema.zambretti_forecast = forecast_cache[obs.station_id]
         else:
             # Cache miss — run the legacy DB lookup so cold-start still works.
             # The abs(epoch) sort is non-indexable but this path only fires

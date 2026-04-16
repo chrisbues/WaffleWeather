@@ -161,15 +161,14 @@ else
     echo "  MQTT password file already exists, skipping user creation."
 fi
 
-# Create ACL file: waffleweather user can read/write ecowitt2mqtt topics
-# and read $SYS/broker/+ for health telemetry. Narrowed from wildcard-all
-# to contain blast radius if the MQTT credential is ever compromised.
+# Create ACL file: waffleweather user can read/write ecowitt2mqtt topics.
+# Narrowed from wildcard-all to contain blast radius if the MQTT credential
+# is ever compromised.
 if [ ! -f /etc/mosquitto/acls.conf ]; then
     sudo tee /etc/mosquitto/acls.conf > /dev/null <<EOF
 # WaffleWeather MQTT ACLs
 user waffleweather
 topic readwrite ecowitt2mqtt/#
-topic read \$SYS/broker/+
 EOF
     echo "  MQTT ACL file created."
 fi

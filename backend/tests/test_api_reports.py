@@ -4,7 +4,6 @@ from datetime import date
 from unittest.mock import AsyncMock, MagicMock
 
 
-
 def _make_station():
     s = MagicMock()
     s.id = "test-station"

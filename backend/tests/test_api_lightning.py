@@ -4,7 +4,6 @@ from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock
 
 
-
 def _make_lightning_event(**overrides):
     """Build a mock LightningEvent-like object."""
     evt = MagicMock()

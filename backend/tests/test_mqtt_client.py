@@ -3,7 +3,6 @@
 from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 
-
 from app.mqtt.client import (
     _detect_lightning_event,
     _handle_message,

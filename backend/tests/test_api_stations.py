@@ -4,7 +4,6 @@ from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock
 
 
-
 class TestListStations:
     async def test_returns_list(self, test_client, mock_db_session):
         s1 = MagicMock()

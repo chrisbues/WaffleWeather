@@ -4,7 +4,6 @@ from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock
 
 
-
 class TestGetLatestObservation:
     async def test_happy_path(self, test_client, mock_db_session):
         fake_obs = MagicMock()

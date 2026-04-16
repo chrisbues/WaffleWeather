@@ -1,8 +1,6 @@
 """Tests for app/main.py — app configuration and middleware."""
 
 
-
-
 class TestAppRoutes:
     def test_api_routes_registered(self):
         from app.main import app

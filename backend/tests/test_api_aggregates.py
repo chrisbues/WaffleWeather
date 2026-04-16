@@ -4,7 +4,6 @@ from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock
 
 
-
 def _make_agg_row(**overrides):
     """Build a dict that looks like a DB mapping row for aggregate views."""
     base = {

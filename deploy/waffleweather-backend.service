@@ -7,9 +7,16 @@ Requires=postgresql.service mosquitto.service
 Type=exec
 User=waffleweather
 WorkingDirectory=/opt/waffleweather/backend
+# --limit-concurrency 100: bounds simultaneous in-flight HTTP requests.
+# Note: each open WebSocket consumes one slot for its lifetime, so with 20-30
+# persistent WS clients the effective HTTP slot budget is ~70-80.
+# --limit-max-requests 10000: graceful worker recycle (single-worker systemd
+# service → process exit → systemd Restart within ~5s; acceptable tradeoff
+# for memory-leak protection).
 ExecStart=/opt/waffleweather/backend/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --limit-concurrency 100 --limit-max-requests 10000
 Restart=always
 RestartSec=5
+TimeoutStopSec=30
 EnvironmentFile=/opt/waffleweather/.env
 
 [Install]

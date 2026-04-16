@@ -3,11 +3,27 @@
 from fastapi import APIRouter
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
+from app.config import Settings
+
 router = APIRouter()
+
+settings = Settings()
 
 
 @router.websocket("/ws/live")
 async def websocket_live(websocket: WebSocket):
+    # Origin validation: reject cross-origin browser connections when cors_origins is set.
+    # A missing Origin header (e.g. native/non-browser clients) is not rejected — the guard
+    # is against browser-based cross-origin attacks, not against clients that can trivially
+    # omit the header anyway.
+    origin = websocket.headers.get("origin")
+    allowed = settings.cors_origins or []
+    if isinstance(allowed, str):
+        allowed = [o.strip() for o in allowed.split(",") if o.strip()]
+    if origin is not None and allowed and origin not in allowed:
+        await websocket.close(code=4403)
+        return
+
     manager = websocket.app.state.ws_manager
     accepted = await manager.connect(websocket)
     if not accepted:

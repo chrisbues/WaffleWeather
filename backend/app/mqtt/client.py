@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import re
 from collections import deque
 from datetime import datetime, timedelta
 
@@ -25,6 +26,25 @@ _pressure_history: deque[tuple[datetime, float]] = deque(maxlen=1000)
 # In-memory lightning state for event detection.
 # Maps station_id -> (last_count, last_lightning_time)
 _last_lightning: dict[str, tuple[int, datetime | None]] = {}
+
+# Allowed characters for device_id extracted from MQTT topics.
+# Alphanumeric plus underscore and hyphen, 1-64 characters. This keeps the
+# station_id safe for use as a DB key and prevents injection of unexpected
+# characters from a malformed topic.
+_DEVICE_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
+
+
+def _extract_device_id(raw_segment) -> str | None:
+    """Validate a topic segment and return it as a device_id, or None if invalid.
+
+    Accepts alphanumeric, underscore, and hyphen; rejects empty strings,
+    anything longer than 64 characters, and non-string inputs.
+    """
+    if not isinstance(raw_segment, str):
+        return None
+    if not _DEVICE_ID_RE.fullmatch(raw_segment):
+        return None
+    return raw_segment
 
 
 async def mqtt_listener(settings: Settings, broadcast_fn=None) -> None:
@@ -82,10 +102,20 @@ async def _handle_message(
     # ecowitt2mqtt publishes to ecowitt2mqtt or ecowitt2mqtt/<device_id>
     parts = topic.split("/")
     if len(parts) >= 2:
-        device_id = parts[-1]
+        raw_segment = parts[-1]
     else:
         # Single-level topic — use base topic name as device ID
-        device_id = parts[0]
+        raw_segment = parts[0]
+
+    device_id = _extract_device_id(raw_segment)
+    if device_id is None:
+        logger.warning(
+            "Rejected MQTT message with malformed device_id segment: topic=%r segment=%r",
+            topic,
+            raw_segment,
+        )
+        return
+
     parse_result = parse_ecowitt_payload(device_id, message.payload)
     if parse_result is None:
         return

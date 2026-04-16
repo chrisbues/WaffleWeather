@@ -161,3 +161,122 @@ class TestParseEcowittPayload:
         assert "solar_radiation" in columns
         assert "lightning_count" in columns
         assert "soil_moisture_1" in columns
+
+
+class TestParserSafety:
+    """Parser safety: malformed values in diagnostics and bounds checking."""
+
+    def test_tolerates_non_numeric_voltage_battery(self):
+        """Non-numeric voltage battery raw should yield None, not crash the observation."""
+        payload = json.dumps({"temp1": 20.5, "wh68batt": "NaN"}).encode()
+        result = parse_ecowitt_payload("dev1", payload)
+        assert result is not None, "Parser should not return None for the whole observation"
+        obs, diag = result
+        # Other fields survived
+        assert obs.get("temp_outdoor") == 20.5
+        # Battery entry either omitted or has a non-literal value
+        if "wh68batt" in diag["batteries"]:
+            assert diag["batteries"]["wh68batt"]["value"] != "NaN"
+            assert diag["batteries"]["wh68batt"]["value"] is None
+
+    def test_tolerates_non_numeric_percentage_battery(self):
+        """Non-numeric percentage battery raw should yield None, not crash."""
+        payload = json.dumps({"temp1": 20.5, "wh57batt": "N/A"}).encode()
+        result = parse_ecowitt_payload("dev1", payload)
+        assert result is not None
+        obs, diag = result
+        assert obs.get("temp_outdoor") == 20.5
+
+    def test_tolerates_non_numeric_gateway_field(self):
+        """Non-numeric gateway field should yield None, not crash."""
+        payload = json.dumps({"temp1": 20.5, "runtime": "broken"}).encode()
+        result = parse_ecowitt_payload("dev1", payload)
+        assert result is not None
+        obs, diag = result
+        assert obs.get("temp_outdoor") == 20.5
+        # Runtime either absent or None; NEVER the literal "broken"
+        assert diag["gateway"].get("runtime") != "broken"
+
+    def test_rejects_out_of_range_pressure_abs(self):
+        """Pressure outside physical bounds should be set to None, not stored."""
+        payload = json.dumps({"baromabs": 1500.0}).encode()
+        result = parse_ecowitt_payload("dev1", payload)
+        obs, _ = result
+        assert obs.get("pressure_abs") is None or "pressure_abs" not in obs
+
+    def test_rejects_out_of_range_pressure_rel(self):
+        payload = json.dumps({"baromrel": 300.0}).encode()  # too low
+        result = parse_ecowitt_payload("dev1", payload)
+        obs, _ = result
+        assert obs.get("pressure_rel") is None or "pressure_rel" not in obs
+
+    def test_rejects_out_of_range_temperature(self):
+        payload = json.dumps({"temp1": 200.0}).encode()  # way too hot
+        result = parse_ecowitt_payload("dev1", payload)
+        obs, _ = result
+        assert obs.get("temp_outdoor") is None or "temp_outdoor" not in obs
+
+    def test_rejects_out_of_range_temperature_indoor(self):
+        payload = json.dumps({"tempin": -100.0}).encode()  # too cold for indoors
+        result = parse_ecowitt_payload("dev1", payload)
+        obs, _ = result
+        assert obs.get("temp_indoor") is None or "temp_indoor" not in obs
+
+    def test_rejects_out_of_range_humidity(self):
+        payload = json.dumps({"humidity1": 150.0}).encode()
+        result = parse_ecowitt_payload("dev1", payload)
+        obs, _ = result
+        assert obs.get("humidity_outdoor") is None or "humidity_outdoor" not in obs
+
+    def test_rejects_negative_rain(self):
+        payload = json.dumps({"dailyrain": -5.0}).encode()
+        result = parse_ecowitt_payload("dev1", payload)
+        obs, _ = result
+        assert obs.get("rain_daily") is None or "rain_daily" not in obs
+
+    def test_rejects_negative_wind_speed(self):
+        payload = json.dumps({"windspeed": -3.0}).encode()
+        result = parse_ecowitt_payload("dev1", payload)
+        obs, _ = result
+        assert obs.get("wind_speed") is None or "wind_speed" not in obs
+
+    def test_rejects_out_of_range_uv(self):
+        payload = json.dumps({"uv": 500.0}).encode()
+        result = parse_ecowitt_payload("dev1", payload)
+        obs, _ = result
+        assert obs.get("uv_index") is None or "uv_index" not in obs
+
+    def test_rejects_out_of_range_solar(self):
+        payload = json.dumps({"solarradiation": 50000.0}).encode()
+        result = parse_ecowitt_payload("dev1", payload)
+        obs, _ = result
+        assert obs.get("solar_radiation") is None or "solar_radiation" not in obs
+
+    def test_accepts_in_range_values(self):
+        """Normal values should pass through unchanged."""
+        payload = json.dumps({
+            "baromabs": 1013.25,
+            "temp1": 20.0,
+            "dailyrain": 0.5,
+            "humidity1": 65.0,
+            "windspeed": 15.0,
+            "uv": 5.0,
+            "solarradiation": 450.0,
+        }).encode()
+        result = parse_ecowitt_payload("dev1", payload)
+        obs, _ = result
+        assert obs["pressure_abs"] == 1013.25
+        assert obs["temp_outdoor"] == 20.0
+        assert obs["rain_daily"] == 0.5
+        assert obs["humidity_outdoor"] == 65.0
+        assert obs["wind_speed"] == 15.0
+        assert obs["uv_index"] == 5.0
+        assert obs["solar_radiation"] == 450.0
+
+    def test_bounds_at_exact_edges(self):
+        """Values at bound edges should be accepted."""
+        payload = json.dumps({"humidity1": 0.0, "humidityin": 100.0}).encode()
+        result = parse_ecowitt_payload("dev1", payload)
+        obs, _ = result
+        assert obs["humidity_outdoor"] == 0.0
+        assert obs["humidity_indoor"] == 100.0

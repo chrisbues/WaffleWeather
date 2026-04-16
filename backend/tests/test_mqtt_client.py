@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from app.mqtt.client import (
     _detect_lightning_event,
+    _extract_device_id,
     _handle_message,
     _last_lightning,
     _pressure_history,
@@ -332,3 +333,55 @@ class TestDetectLightningEvent:
         await _detect_lightning_event("d1", parsed, settings)
         event = session.add.call_args[0][0]
         assert event.filtered is False
+
+
+class TestExtractDeviceId:
+    """Device ID format validation for MQTT topic parsing."""
+
+    def test_accepts_normal_device(self):
+        assert _extract_device_id("GW3000B") == "GW3000B"
+        assert _extract_device_id("GW3000B-abc123") == "GW3000B-abc123"
+        assert _extract_device_id("gateway_01") == "gateway_01"
+        assert _extract_device_id("ecowitt2mqtt") == "ecowitt2mqtt"
+
+    def test_accepts_alphanumeric_underscore_hyphen(self):
+        assert _extract_device_id("abc-123_XYZ") == "abc-123_XYZ"
+
+    def test_rejects_bad_characters(self):
+        assert _extract_device_id("bad topic!") is None
+        assert _extract_device_id("has/slash") is None
+        assert _extract_device_id("has.dot") is None
+        assert _extract_device_id("has+plus") is None
+        assert _extract_device_id("has#hash") is None
+
+    def test_rejects_empty(self):
+        assert _extract_device_id("") is None
+
+    def test_rejects_too_long(self):
+        assert _extract_device_id("x" * 65) is None
+
+    def test_accepts_exact_max_length(self):
+        assert _extract_device_id("x" * 64) == "x" * 64
+
+    def test_rejects_non_string(self):
+        assert _extract_device_id(None) is None
+        assert _extract_device_id(123) is None
+
+
+class TestMalformedTopicHandling:
+    """_handle_message should skip messages with malformed topic/device_id."""
+
+    @patch("app.mqtt.client.parse_ecowitt_payload")
+    async def test_malformed_topic_skipped(self, mock_parse):
+        """Topics with invalid characters in the device_id segment should be skipped."""
+        msg = _make_message(topic="ecowitt2mqtt/bad id!")
+        await _handle_message(msg, _make_settings())
+        # Parser should NOT be invoked with a malformed device_id
+        mock_parse.assert_not_called()
+
+    @patch("app.mqtt.client.parse_ecowitt_payload")
+    async def test_slash_injection_topic_skipped(self, mock_parse):
+        """Topics whose last segment is empty (trailing slash) should be skipped."""
+        msg = _make_message(topic="ecowitt2mqtt/")
+        await _handle_message(msg, _make_settings())
+        mock_parse.assert_not_called()

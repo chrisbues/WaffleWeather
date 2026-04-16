@@ -2,6 +2,7 @@
 
 import json
 import logging
+import math
 from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
@@ -111,6 +112,82 @@ BATTERY_MAP: dict[str, tuple[str, str]] = {
 GATEWAY_FIELDS = {"runtime", "heap", "interval"}
 
 
+# Physical-plausibility bounds per normalized (DB column) field name.
+# Values outside these are treated as bad-sensor-readings and dropped with a log.
+# Units: hPa (pressure), °C (temperature), % (humidity), m/s (wind — ecowitt2mqtt
+# typically publishes in SI, and bounds are generous enough to cover both systems),
+# mm (rain), W/m² (solar).
+_BOUNDS: dict[str, tuple[float, float]] = {
+    "pressure_abs": (800.0, 1100.0),
+    "pressure_rel": (800.0, 1100.0),
+    "temp_outdoor": (-60.0, 60.0),
+    "temp_indoor": (-40.0, 60.0),
+    "dewpoint": (-80.0, 50.0),
+    "feels_like": (-80.0, 70.0),
+    "heat_index": (-80.0, 80.0),
+    "wind_chill": (-80.0, 60.0),
+    "frost_point": (-80.0, 50.0),
+    "humidity_outdoor": (0.0, 100.0),
+    "humidity_indoor": (0.0, 100.0),
+    "wind_speed": (0.0, 150.0),
+    "wind_gust": (0.0, 200.0),
+    "wind_dir": (0.0, 360.0),
+    "rain_rate": (0.0, 500.0),
+    "rain_daily": (0.0, 1000.0),
+    "rain_weekly": (0.0, 5000.0),
+    "rain_monthly": (0.0, 20000.0),
+    "rain_yearly": (0.0, 50000.0),
+    "rain_event": (0.0, 5000.0),
+    "uv_index": (0.0, 20.0),
+    "solar_radiation": (0.0, 2000.0),
+    "bgt": (-60.0, 90.0),
+    "wbgt": (-60.0, 60.0),
+    "vpd": (0.0, 15.0),
+    "pm25": (0.0, 2000.0),
+    "pm10": (0.0, 2000.0),
+    "co2": (0.0, 10000.0),
+    "soil_moisture_1": (0.0, 100.0),
+    "soil_moisture_2": (0.0, 100.0),
+    "lightning_distance": (0.0, 40.0),
+    "lightning_count": (0.0, 1_000_000.0),
+}
+
+
+def _coerce_float(key: str, raw, device_id: str | None = None) -> float | None:
+    """Convert raw to float with bounds check.
+
+    Logs a warning and returns None for unparseable values or values outside
+    the physical-plausibility bounds in _BOUNDS. Keys without a bounds entry
+    are accepted without range checking.
+    """
+    try:
+        value = float(raw)
+    except (TypeError, ValueError):
+        logger.warning(
+            "Unparseable numeric value for %s: %r (device=%s)", key, raw, device_id
+        )
+        return None
+    if not math.isfinite(value):
+        logger.warning(
+            "Non-finite numeric value for %s: %r (device=%s)", key, raw, device_id
+        )
+        return None
+    bounds = _BOUNDS.get(key)
+    if bounds is not None:
+        lo, hi = bounds
+        if not (lo <= value <= hi):
+            logger.warning(
+                "Out-of-range value for %s: %s (bounds %s-%s, device=%s)",
+                key,
+                value,
+                lo,
+                hi,
+                device_id,
+            )
+            return None
+    return value
+
+
 def parse_ecowitt_payload(
     device_id: str, payload: str | bytes
 ) -> tuple[dict, dict] | None:
@@ -166,11 +243,29 @@ def parse_ecowitt_payload(
                 else:
                     result[db_column] = datetime.fromtimestamp(float(raw_value), tz=timezone.utc)
             elif db_column in INTEGER_FIELDS:
-                result[db_column] = int(float(raw_value))
+                # Parse via _coerce_float first to get bounds + safe conversion
+                coerced = _coerce_float(db_column, raw_value, device_id)
+                if coerced is not None:
+                    result[db_column] = int(coerced)
             elif db_column in FAHRENHEIT_FIELDS:
-                result[db_column] = round((float(raw_value) - 32.0) * 5.0 / 9.0, 2)
+                # Convert F->C then bounds-check in Celsius via _coerce_float.
+                try:
+                    celsius = round((float(raw_value) - 32.0) * 5.0 / 9.0, 2)
+                except (TypeError, ValueError):
+                    logger.warning(
+                        "Unparseable Fahrenheit value for %s: %r (device=%s)",
+                        ecowitt_key,
+                        raw_value,
+                        device_id,
+                    )
+                    continue
+                coerced = _coerce_float(db_column, celsius, device_id)
+                if coerced is not None:
+                    result[db_column] = coerced
             else:
-                result[db_column] = float(raw_value)
+                coerced = _coerce_float(db_column, raw_value, device_id)
+                if coerced is not None:
+                    result[db_column] = coerced
         except (ValueError, TypeError) as e:
             logger.debug("Could not parse %s=%r for device %s: %s", ecowitt_key, raw_value, device_id, e)
 
@@ -181,14 +276,43 @@ def parse_ecowitt_payload(
         if ecowitt_key not in data or data[ecowitt_key] is None:
             continue
         raw = data[ecowitt_key]
+        # Boolean batteries publish as strings ("OFF"/"ON"); keep as-is.
+        # Numeric batteries (voltage/percentage) must parse safely.
+        if isinstance(raw, str) and batt_type == "boolean":
+            value: str | float | None = raw
+        else:
+            try:
+                parsed_val = float(raw)
+                if not math.isfinite(parsed_val):
+                    raise ValueError("non-finite")
+                value = parsed_val
+            except (TypeError, ValueError):
+                logger.warning(
+                    "Unparseable battery value for %s: %r (device=%s)",
+                    ecowitt_key,
+                    raw,
+                    device_id,
+                )
+                value = None
         diagnostics["batteries"][ecowitt_key] = {
             "label": label,
             "type": batt_type,
-            "value": raw if isinstance(raw, str) else float(raw),
+            "value": value,
         }
 
     for key in GATEWAY_FIELDS:
         if key in data and data[key] is not None:
-            diagnostics["gateway"][key] = float(data[key])
+            try:
+                gv = float(data[key])
+                if not math.isfinite(gv):
+                    raise ValueError("non-finite")
+                diagnostics["gateway"][key] = gv
+            except (TypeError, ValueError):
+                logger.warning(
+                    "Unparseable gateway field %s: %r (device=%s)",
+                    key,
+                    data[key],
+                    device_id,
+                )
 
     return result, diagnostics

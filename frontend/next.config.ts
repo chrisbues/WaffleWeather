@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 import { readFileSync } from "fs";
 
 const pkg = JSON.parse(readFileSync("./package.json", "utf-8"));
+const backendUrl = process.env.BACKEND_URL ?? "http://localhost:8000";
 
 const nextConfig: NextConfig = {
   output: "standalone",
@@ -26,11 +27,11 @@ const nextConfig: NextConfig = {
   rewrites: async () => [
     {
       source: "/api/:path*",
-      destination: "http://localhost:8000/api/:path*",
+      destination: `${backendUrl}/api/:path*`,
     },
     {
       source: "/ws/:path*",
-      destination: "http://localhost:8000/ws/:path*",
+      destination: `${backendUrl}/ws/:path*`,
     },
   ],
 };
